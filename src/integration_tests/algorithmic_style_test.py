@@ -25,7 +25,7 @@ def test_factorial() -> None:
                 \EndIf
             \EndFunction
         \end{algorithmic}
-        """  # noqa: E501
+        """
     ).strip()
     ipython_latex = (
         r"\begin{array}{l}"

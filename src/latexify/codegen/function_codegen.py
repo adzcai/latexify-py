@@ -83,11 +83,10 @@ class FunctionCodegen(ast.NodeVisitor):
                 raise exceptions.LatexifySyntaxError(
                     f"Unsupported last statement: {type(return_stmt).__name__}"
                 )
-        else:
-            if not isinstance(return_stmt, (ast.Return, ast.If)):
-                raise exceptions.LatexifySyntaxError(
-                    f"Unsupported last statement: {type(return_stmt).__name__}"
-                )
+        elif not isinstance(return_stmt, (ast.Return, ast.If)):
+            raise exceptions.LatexifySyntaxError(
+                f"Unsupported last statement: {type(return_stmt).__name__}"
+            )
 
         # Function signature: f(x, ...)
         signature_str = name_str + "(" + ", ".join(arg_strs) + ")"

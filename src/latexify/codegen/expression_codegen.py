@@ -606,9 +606,7 @@ class ExpressionCodegen(ast.NodeVisitor):
                         # NOTE(odashi): Unary "-" always require \cdot.
                         return False
                     re = re.operand
-                elif isinstance(re, ast.BinOp):
-                    re = re.left
-                elif isinstance(re, ast.Compare):
+                elif isinstance(re, (ast.BinOp, ast.Compare)):
                     re = re.left
                 elif isinstance(re, ast.BoolOp):
                     re = re.values[0]

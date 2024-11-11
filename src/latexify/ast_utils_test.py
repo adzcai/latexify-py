@@ -6,7 +6,6 @@ import ast
 from typing import Any
 
 import pytest
-
 from latexify import ast_utils, test_utils
 
 

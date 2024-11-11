@@ -6,9 +6,8 @@ import enum
 from collections.abc import Callable
 from typing import Any
 
-from latexify import codegen
+from latexify import codegen, parser, transformers
 from latexify import config as cfg
-from latexify import parser, transformers
 
 
 class Style(enum.Enum):

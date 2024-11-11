@@ -2,7 +2,7 @@
 
 [![Python](https://img.shields.io/pypi/pyversions/latexify-py.svg)](https://pypi.org/project/latexify-py/)
 [![PyPI Latest Release](https://img.shields.io/pypi/v/latexify-py.svg)](https://pypi.org/project/latexify-py/)
-[![License](https://img.shields.io/pypi/l/latexify-py.svg)](https://github.com/google/latexify_py/blob/main/LICENSE)
+[![License](https://img.shields.io/pypi/l/latexify-py.svg)](./LICENSE)
 [![Downloads](https://pepy.tech/badge/latexify-py/month)](https://pepy.tech/project/latexify-py)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Imports: isort](https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat&labelColor=ef8336)](https://pycqa.github.io/isort/)
@@ -35,7 +35,7 @@ corresponding $\LaTeX$ expression:
 ## Getting started
 
 See the
-[example notebook](https://github.com/google/latexify_py/blob/main/examples/latexify_examples.ipynb),
+[example notebook](./examples/latexify_examples.ipynb),
 which provides several
 use-cases of this library.
 
@@ -43,13 +43,21 @@ You can also try the above notebook on
 [Google Colaboratory](https://colab.research.google.com/github/google/latexify_py/blob/main/examples/latexify_examples.ipynb).
 
 See also the official
-[documentation](https://github.com/google/latexify_py/blob/main/docs/index.md)
+[documentation](./docs/index.md)
 for more details.
+
+## Installation
+
+This project uses the [Hatch](https://hatch.pypa.io/) project manager.
+Install it, then run `hatch shell dev` to enter a shell.
+Then you can run `pip show latexify_py` to verify that the package and its requirements were successfully installed.
+
+Format the source files with `hatch fmt`.
 
 ## How to Contribute
 
 To contribute to this project, please refer
-[CONTRIBUTING.md](https://github.com/google/latexify_py/blob/develop/CONTRIBUTING.md).
+[CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## Disclaimer
 
@@ -62,5 +70,4 @@ or contact the [main maintainer](https://github.com/odashi).
 
 ## License
 
-This software adopts the
-[Apache License 2.0](https://github.com/google/latexify_py/blob/develop/LICENSE).
+This software adopts the [Apache License 2.0](./LICENSE).

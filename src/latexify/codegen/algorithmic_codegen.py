@@ -181,6 +181,8 @@ class AlgorithmicCodegen(ast.NodeVisitor):
 class IPythonAlgorithmicCodegen(ast.NodeVisitor):
     """Codegen for single algorithms targeting IPython.
 
+    Doesn't use the `algorithmic` environment.
+    
     This codegen works for Module with single FunctionDef node to generate a single
     LaTeX expression of the given algorithm.
     """

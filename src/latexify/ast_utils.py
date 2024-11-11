@@ -67,13 +67,12 @@ def make_constant(value: Any) -> ast.expr:
             return ast.Str(s=value)
         if isinstance(value, bytes):
             return ast.Bytes(s=value)
-    else:
-        if (
-            value is None
-            or value is ...
-            or isinstance(value, (bool, int, float, complex, str, bytes))
-        ):
-            return ast.Constant(value=value)
+    elif (
+        value is None
+        or value is ...
+        or isinstance(value, (bool, int, float, complex, str, bytes))
+    ):
+        return ast.Constant(value=value)
 
     raise ValueError(f"Unsupported type to generate Constant: {type(value).__name__}")
 
@@ -127,13 +126,12 @@ def extract_int_or_none(node: ast.expr) -> int | None:
             and not isinstance(node.n, bool)
         ):
             return node.n
-    else:
-        if (
-            isinstance(node, ast.Constant)
-            and isinstance(node.value, int)
-            and not isinstance(node.n, bool)
-        ):
-            return node.value
+    elif (
+        isinstance(node, ast.Constant)
+        and isinstance(node.value, int)
+        and not isinstance(node.n, bool)
+    ):
+        return node.value
 
     return None
 

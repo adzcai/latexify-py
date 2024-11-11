@@ -12,7 +12,6 @@ class LatexifyError(Exception):
     Errors caused by wrong inputs should raise built-in exceptions.
     """
 
-    ...
 
 
 class LatexifyNotSupportedError(LatexifyError):
@@ -22,7 +21,6 @@ class LatexifyNotSupportedError(LatexifyError):
     of the implementation. Possibly this error would be resolved in the future.
     """
 
-    ...
 
 
 class LatexifySyntaxError(LatexifyError):
@@ -33,4 +31,3 @@ class LatexifySyntaxError(LatexifyError):
     future.
     """
 
-    ...

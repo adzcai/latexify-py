@@ -69,7 +69,7 @@ class LatexifiedAlgorithm(LatexifiedRepr):
             self._error = None
         except exceptions.LatexifyError as e:
             self._latex = None
-            self._error = f"{type(e).__name__}: {str(e)}"
+            self._error = f"{type(e).__name__}: {e!s}"
 
         try:
             self._ipython_latex = generate_latex.get_latex(
@@ -78,7 +78,7 @@ class LatexifiedAlgorithm(LatexifiedRepr):
             self._ipython_error = None
         except exceptions.LatexifyError as e:
             self._ipython_latex = None
-            self._ipython_error = f"{type(e).__name__}: {str(e)}"
+            self._ipython_error = f"{type(e).__name__}: {e!s}"
 
     def __str__(self) -> str:
         return self._latex if self._latex is not None else cast(str, self._error)
@@ -116,7 +116,7 @@ class LatexifiedFunction(LatexifiedRepr):
             self._error = None
         except exceptions.LatexifyError as e:
             self._latex = None
-            self._error = f"{type(e).__name__}: {str(e)}"
+            self._error = f"{type(e).__name__}: {e!s}"
 
     def __str__(self) -> str:
         return self._latex if self._latex is not None else cast(str, self._error)

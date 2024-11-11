@@ -1,5 +1,7 @@
 """Tests for latexify.frontend."""
 
+# ruff: noqa: SLF001
+
 from __future__ import annotations
 
 from latexify import frontend

@@ -5,7 +5,6 @@ from __future__ import annotations
 import ast
 
 import pytest
-
 from latexify import exceptions, parser, test_utils
 
 
