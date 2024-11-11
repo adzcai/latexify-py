@@ -5,7 +5,6 @@ from __future__ import annotations
 from typing import Any
 
 import pytest
-
 from latexify import exceptions
 from latexify.codegen.codegen_utils import convert_constant
 

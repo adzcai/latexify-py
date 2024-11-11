@@ -5,9 +5,9 @@ from __future__ import annotations
 import ast
 
 import pytest
+from latexify.transformers.identifier_replacer import IdentifierReplacer
 
 from .. import utils
-from latexify.transformers.identifier_replacer import IdentifierReplacer
 
 
 def test_invalid_mapping() -> None:

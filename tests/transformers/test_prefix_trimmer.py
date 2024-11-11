@@ -5,7 +5,6 @@ from __future__ import annotations
 import ast
 
 import pytest
-
 from latexify import ast_utils
 from latexify.transformers import prefix_trimmer
 

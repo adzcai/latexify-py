@@ -6,7 +6,6 @@ import ast
 import textwrap
 
 import pytest
-
 from latexify import exceptions
 from latexify.codegen import algorithmic_codegen
 

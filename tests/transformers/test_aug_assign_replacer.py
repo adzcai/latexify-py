@@ -2,8 +2,9 @@
 
 import ast
 
-from .. import utils
 from latexify.transformers.aug_assign_replacer import AugAssignReplacer
+
+from .. import utils
 
 
 def test_replace() -> None:
