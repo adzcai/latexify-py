@@ -43,7 +43,7 @@ dev = [
 features = ["dev"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/latexify"]
+packages = ["src"]
 
 [tool.hatch.version]
-path = "src/latexify/_version.py"
+path = "src/_version.py"
