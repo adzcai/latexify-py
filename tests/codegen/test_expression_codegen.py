@@ -6,8 +6,10 @@ import ast
 
 import pytest
 
-from latexify import ast_utils, exceptions, test_utils
+from latexify import ast_utils, exceptions
 from latexify.codegen import expression_codegen
+
+from .. import utils
 
 
 def test_generic_visit() -> None:
@@ -792,7 +794,7 @@ def test_visit_boolop(code: str, latex: str) -> None:
     assert expression_codegen.ExpressionCodegen().visit(tree) == latex
 
 
-@test_utils.require_at_most(7)
+@utils.require_at_most(7)
 @pytest.mark.parametrize(
     "code,cls,latex",
     [
@@ -817,7 +819,7 @@ def test_visit_constant_lagacy(code: str, cls: type[ast.expr], latex: str) -> No
     assert expression_codegen.ExpressionCodegen().visit(tree) == latex
 
 
-@test_utils.require_at_least(8)
+@utils.require_at_least(8)
 @pytest.mark.parametrize(
     "code,latex",
     [

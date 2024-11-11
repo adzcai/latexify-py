@@ -2,8 +2,10 @@
 
 import ast
 
-from latexify import ast_utils, parser, test_utils
+from latexify import ast_utils, parser
 from latexify.transformers.docstring_remover import DocstringRemover
+
+from .. import utils
 
 
 def test_remove_docstrings() -> None:
@@ -29,4 +31,4 @@ def test_remove_docstrings() -> None:
         ],
     )
     transformed = DocstringRemover().visit(tree)
-    test_utils.assert_ast_equal(transformed, expected)
+    utils.assert_ast_equal(transformed, expected)

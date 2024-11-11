@@ -6,7 +6,7 @@ import ast
 
 import pytest
 
-from latexify import test_utils
+from .. import utils
 from latexify.transformers.identifier_replacer import IdentifierReplacer
 
 
@@ -23,19 +23,19 @@ def test_name_replaced() -> None:
     source = ast.Name(id="foo", ctx=ast.Load())
     expected = ast.Name(id="bar", ctx=ast.Load())
     transformed = IdentifierReplacer({"foo": "bar"}).visit(source)
-    test_utils.assert_ast_equal(transformed, expected)
+    utils.assert_ast_equal(transformed, expected)
 
 
 def test_name_not_replaced() -> None:
     source = ast.Name(id="foo", ctx=ast.Load())
     expected = ast.Name(id="foo", ctx=ast.Load())
     transformed = IdentifierReplacer({"fo": "bar"}).visit(source)
-    test_utils.assert_ast_equal(transformed, expected)
+    utils.assert_ast_equal(transformed, expected)
     transformed = IdentifierReplacer({"fooo": "bar"}).visit(source)
-    test_utils.assert_ast_equal(transformed, expected)
+    utils.assert_ast_equal(transformed, expected)
 
 
-@test_utils.require_at_most(7)
+@utils.require_at_most(7)
 def test_functiondef() -> None:
     # Subtree of:
     #     @d
@@ -73,10 +73,10 @@ def test_functiondef() -> None:
 
     mapping = {x: x.upper() for x in "abcdfyz"}
     transformed = IdentifierReplacer(mapping).visit(source)
-    test_utils.assert_ast_equal(transformed, expected)
+    utils.assert_ast_equal(transformed, expected)
 
 
-@test_utils.require_at_least(8)
+@utils.require_at_least(8)
 def test_functiondef_with_posonlyargs() -> None:
     # Subtree of:
     #     @d
@@ -116,7 +116,7 @@ def test_functiondef_with_posonlyargs() -> None:
 
     mapping = {x: x.upper() for x in "abcdfxyz"}
     transformed = IdentifierReplacer(mapping).visit(source)
-    test_utils.assert_ast_equal(transformed, expected)
+    utils.assert_ast_equal(transformed, expected)
 
 
 def test_expr() -> None:
@@ -144,4 +144,4 @@ def test_expr() -> None:
 
     mapping = {x: x.upper() for x in "xyz"}
     transformed = IdentifierReplacer(mapping).visit(source)
-    test_utils.assert_ast_equal(transformed, expected)
+    utils.assert_ast_equal(transformed, expected)

@@ -2,7 +2,7 @@
 
 import ast
 
-from latexify import test_utils
+from .. import utils
 from latexify.transformers.aug_assign_replacer import AugAssignReplacer
 
 
@@ -21,4 +21,4 @@ def test_replace() -> None:
         ),
     )
     transformed = AugAssignReplacer().visit(tree)
-    test_utils.assert_ast_equal(transformed, expected)
+    utils.assert_ast_equal(transformed, expected)

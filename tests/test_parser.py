@@ -5,7 +5,9 @@ from __future__ import annotations
 import ast
 
 import pytest
-from latexify import exceptions, parser, test_utils
+from latexify import exceptions, parser
+
+from . import utils
 
 
 def test_parse_function_with_posonlyargs() -> None:
@@ -25,7 +27,7 @@ def test_parse_function_with_posonlyargs() -> None:
     )
 
     obtained = parser.parse_function(f)
-    test_utils.assert_ast_equal(obtained, expected)
+    utils.assert_ast_equal(obtained, expected)
 
 
 def test_parse_function_with_lambda() -> None:

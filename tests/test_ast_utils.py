@@ -6,11 +6,13 @@ import ast
 from typing import Any
 
 import pytest
-from latexify import ast_utils, test_utils
+from latexify import ast_utils
+
+from . import utils
 
 
 def test_parse_expr() -> None:
-    test_utils.assert_ast_equal(
+    utils.assert_ast_equal(
         ast_utils.parse_expr("a + b"),
         ast.BinOp(
             left=ast_utils.make_name("a"),
@@ -21,19 +23,19 @@ def test_parse_expr() -> None:
 
 
 def test_make_name() -> None:
-    test_utils.assert_ast_equal(
+    utils.assert_ast_equal(
         ast_utils.make_name("foo"), ast.Name(id="foo", ctx=ast.Load())
     )
 
 
 def test_make_attribute() -> None:
-    test_utils.assert_ast_equal(
+    utils.assert_ast_equal(
         ast_utils.make_attribute(ast_utils.make_name("foo"), "bar"),
         ast.Attribute(ast.Name(id="foo", ctx=ast.Load()), attr="bar", ctx=ast.Load()),
     )
 
 
-@test_utils.require_at_most(7)
+@utils.require_at_most(7)
 @pytest.mark.parametrize(
     "value,expected",
     [
@@ -49,13 +51,13 @@ def test_make_attribute() -> None:
     ],
 )
 def test_make_constant_legacy(value: Any, expected: ast.Constant) -> None:
-    test_utils.assert_ast_equal(
+    utils.assert_ast_equal(
         observed=ast_utils.make_constant(value),
         expected=expected,
     )
 
 
-@test_utils.require_at_least(8)
+@utils.require_at_least(8)
 @pytest.mark.parametrize(
     "value,expected",
     [
@@ -71,7 +73,7 @@ def test_make_constant_legacy(value: Any, expected: ast.Constant) -> None:
     ],
 )
 def test_make_constant(value: Any, expected: ast.Constant) -> None:
-    test_utils.assert_ast_equal(
+    utils.assert_ast_equal(
         observed=ast_utils.make_constant(value),
         expected=expected,
     )
@@ -82,7 +84,7 @@ def test_make_constant_invalid() -> None:
         ast_utils.make_constant(object())
 
 
-@test_utils.require_at_most(7)
+@utils.require_at_most(7)
 @pytest.mark.parametrize(
     "value,expected",
     [
@@ -100,7 +102,7 @@ def test_is_constant_legacy(value: ast.AST, expected: bool) -> None:
     assert ast_utils.is_constant(value) is expected
 
 
-@test_utils.require_at_least(8)
+@utils.require_at_least(8)
 @pytest.mark.parametrize(
     "value,expected",
     [
@@ -113,7 +115,7 @@ def test_is_constant(value: ast.AST, expected: bool) -> None:
     assert ast_utils.is_constant(value) is expected
 
 
-@test_utils.require_at_most(7)
+@utils.require_at_most(7)
 @pytest.mark.parametrize(
     "value,expected",
     [
@@ -131,7 +133,7 @@ def test_is_str_legacy(value: ast.AST, expected: bool) -> None:
     assert ast_utils.is_str(value) is expected
 
 
-@test_utils.require_at_least(8)
+@utils.require_at_least(8)
 @pytest.mark.parametrize(
     "value,expected",
     [

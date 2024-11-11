@@ -6,8 +6,10 @@ import ast
 
 import pytest
 
-from latexify import ast_utils, test_utils
+from latexify import ast_utils
 from latexify.transformers import prefix_trimmer
+
+from .. import utils
 
 # For convenience
 make_name = ast_utils.make_name
@@ -37,7 +39,7 @@ def test_invalid_prefix(prefix: str) -> None:
 def test_name(prefixes: set[str], expected: ast.expr) -> None:
     source = make_name("foo")
     transformed = PrefixTrimmer(prefixes).visit(source)
-    test_utils.assert_ast_equal(transformed, expected)
+    utils.assert_ast_equal(transformed, expected)
 
 
 @pytest.mark.parametrize(
@@ -56,7 +58,7 @@ def test_name(prefixes: set[str], expected: ast.expr) -> None:
 def test_attr_1(prefixes: set[str], expected: ast.expr) -> None:
     source = make_attr(make_name("foo"), "bar")
     transformed = PrefixTrimmer(prefixes).visit(source)
-    test_utils.assert_ast_equal(transformed, expected)
+    utils.assert_ast_equal(transformed, expected)
 
 
 @pytest.mark.parametrize(
@@ -77,4 +79,4 @@ def test_attr_1(prefixes: set[str], expected: ast.expr) -> None:
 def test_attr_2(prefixes: set[str], expected: ast.expr) -> None:
     source = make_attr(make_attr(make_name("foo"), "bar"), "baz")
     transformed = PrefixTrimmer(prefixes).visit(source)
-    test_utils.assert_ast_equal(transformed, expected)
+    utils.assert_ast_equal(transformed, expected)

@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import ast
 
-from latexify import ast_utils, parser, test_utils
+from latexify import ast_utils, parser
 from latexify.transformers.assignment_reducer import AssignmentReducer
+
+from .. import utils
 
 
 def _make_ast(body: list[ast.stmt]) -> ast.Module:
@@ -44,7 +46,7 @@ def test_unchanged() -> None:
         ]
     )
     transformed = AssignmentReducer().visit(parser.parse_function(f))
-    test_utils.assert_ast_equal(transformed, expected)
+    utils.assert_ast_equal(transformed, expected)
 
 
 def test_constant() -> None:
@@ -58,7 +60,7 @@ def test_constant() -> None:
         ]
     )
     transformed = AssignmentReducer().visit(parser.parse_function(f))
-    test_utils.assert_ast_equal(transformed, expected)
+    utils.assert_ast_equal(transformed, expected)
 
 
 def test_nested() -> None:
@@ -78,7 +80,7 @@ def test_nested() -> None:
         ]
     )
     transformed = AssignmentReducer().visit(parser.parse_function(f))
-    test_utils.assert_ast_equal(transformed, expected)
+    utils.assert_ast_equal(transformed, expected)
 
 
 def test_nested2() -> None:
@@ -103,7 +105,7 @@ def test_nested2() -> None:
         ]
     )
     transformed = AssignmentReducer().visit(parser.parse_function(f))
-    test_utils.assert_ast_equal(transformed, expected)
+    utils.assert_ast_equal(transformed, expected)
 
 
 def test_overwrite() -> None:
@@ -124,4 +126,4 @@ def test_overwrite() -> None:
         ]
     )
     transformed = AssignmentReducer().visit(parser.parse_function(f))
-    test_utils.assert_ast_equal(transformed, expected)
+    utils.assert_ast_equal(transformed, expected)

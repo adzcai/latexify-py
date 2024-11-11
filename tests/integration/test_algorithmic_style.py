@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import textwrap
 
-from integration_tests import integration_utils
+from .utils import check_algorithm
 
 
 def test_factorial() -> None:
@@ -40,7 +40,7 @@ def test_factorial() -> None:
         r" \mathbf{end \ function}"
         r" \end{array}"
     )
-    integration_utils.check_algorithm(fact, latex, ipython_latex)
+    check_algorithm(fact, latex, ipython_latex)
 
 
 def test_collatz() -> None:
@@ -89,4 +89,4 @@ def test_collatz() -> None:
         r" \mathbf{end \ function}"
         r" \end{array}"
     )
-    integration_utils.check_algorithm(collatz, latex, ipython_latex)
+    check_algorithm(collatz, latex, ipython_latex)

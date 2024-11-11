@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import ast
 
-from latexify import ast_utils, test_utils
+from latexify import ast_utils
 from latexify.transformers.function_expander import FunctionExpander
+
+from .. import utils
 
 
 def test_preserve_keywords() -> None:
@@ -20,7 +22,7 @@ def test_preserve_keywords() -> None:
         keywords=[ast.keyword(arg="y", value=ast_utils.make_constant(0))],
     )
     transformed = FunctionExpander(set()).visit(tree)
-    test_utils.assert_ast_equal(transformed, expected)
+    utils.assert_ast_equal(transformed, expected)
 
 
 def test_exp() -> None:
@@ -34,7 +36,7 @@ def test_exp() -> None:
         right=ast_utils.make_name("x"),
     )
     transformed = FunctionExpander({"exp"}).visit(tree)
-    test_utils.assert_ast_equal(transformed, expected)
+    utils.assert_ast_equal(transformed, expected)
 
 
 def test_exp_unchanged() -> None:
@@ -47,7 +49,7 @@ def test_exp_unchanged() -> None:
         args=[ast_utils.make_name("x")],
     )
     transformed = FunctionExpander(set()).visit(tree)
-    test_utils.assert_ast_equal(transformed, expected)
+    utils.assert_ast_equal(transformed, expected)
 
 
 def test_exp_with_attribute() -> None:
@@ -61,7 +63,7 @@ def test_exp_with_attribute() -> None:
         right=ast_utils.make_name("x"),
     )
     transformed2 = FunctionExpander({"exp"}).visit(tree)
-    test_utils.assert_ast_equal(transformed2, expected)
+    utils.assert_ast_equal(transformed2, expected)
 
 
 def test_exp_unchanged_with_attribute() -> None:
@@ -74,7 +76,7 @@ def test_exp_unchanged_with_attribute() -> None:
         args=[ast_utils.make_name("x")],
     )
     transformed = FunctionExpander(set()).visit(tree)
-    test_utils.assert_ast_equal(transformed, expected)
+    utils.assert_ast_equal(transformed, expected)
 
 
 def test_exp_nested1() -> None:
@@ -97,7 +99,7 @@ def test_exp_nested1() -> None:
         ),
     )
     transformed = FunctionExpander({"exp"}).visit(tree)
-    test_utils.assert_ast_equal(transformed, expected)
+    utils.assert_ast_equal(transformed, expected)
 
 
 def test_exp_nested2() -> None:
@@ -121,7 +123,7 @@ def test_exp_nested2() -> None:
         ],
     )
     transformed = FunctionExpander({"exp"}).visit(tree)
-    test_utils.assert_ast_equal(transformed, expected)
+    utils.assert_ast_equal(transformed, expected)
 
 
 def test_atan2() -> None:
@@ -140,7 +142,7 @@ def test_atan2() -> None:
         ],
     )
     transformed = FunctionExpander({"atan2"}).visit(tree)
-    test_utils.assert_ast_equal(transformed, expected)
+    utils.assert_ast_equal(transformed, expected)
 
 
 def test_exp2() -> None:
@@ -154,7 +156,7 @@ def test_exp2() -> None:
         right=ast_utils.make_name("x"),
     )
     transformed = FunctionExpander({"exp2"}).visit(tree)
-    test_utils.assert_ast_equal(transformed, expected)
+    utils.assert_ast_equal(transformed, expected)
 
 
 def test_expm1() -> None:
@@ -171,7 +173,7 @@ def test_expm1() -> None:
         right=ast_utils.make_constant(1),
     )
     transformed = FunctionExpander({"expm1"}).visit(tree)
-    test_utils.assert_ast_equal(transformed, expected)
+    utils.assert_ast_equal(transformed, expected)
 
 
 def test_hypot() -> None:
@@ -198,14 +200,14 @@ def test_hypot() -> None:
         ],
     )
     transformed = FunctionExpander({"hypot"}).visit(tree)
-    test_utils.assert_ast_equal(transformed, expected)
+    utils.assert_ast_equal(transformed, expected)
 
 
 def test_hypot_no_args() -> None:
     tree = ast.Call(func=ast_utils.make_name("hypot"), args=[])
     expected = ast_utils.make_constant(0)
     transformed = FunctionExpander({"hypot"}).visit(tree)
-    test_utils.assert_ast_equal(transformed, expected)
+    utils.assert_ast_equal(transformed, expected)
 
 
 def test_log1p() -> None:
@@ -224,7 +226,7 @@ def test_log1p() -> None:
         ],
     )
     transformed = FunctionExpander({"log1p"}).visit(tree)
-    test_utils.assert_ast_equal(transformed, expected)
+    utils.assert_ast_equal(transformed, expected)
 
 
 def test_pow() -> None:
@@ -238,4 +240,4 @@ def test_pow() -> None:
         right=ast_utils.make_name("y"),
     )
     transformed = FunctionExpander({"pow"}).visit(tree)
-    test_utils.assert_ast_equal(transformed, expected)
+    utils.assert_ast_equal(transformed, expected)

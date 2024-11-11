@@ -5,10 +5,12 @@ from __future__ import annotations
 import ast
 
 import pytest
-from latexify import analyzers, ast_utils, exceptions, test_utils
+from latexify import analyzers, ast_utils, exceptions
+
+from . import utils
 
 
-@test_utils.require_at_least(8)
+@utils.require_at_least(8)
 @pytest.mark.parametrize(
     "code,start,stop,step,start_int,stop_int,step_int",
     [
@@ -109,10 +111,10 @@ def test_analyze_range(
 
     info = analyzers.analyze_range(node)
 
-    test_utils.assert_ast_equal(observed=info.start, expected=start)
-    test_utils.assert_ast_equal(observed=info.stop, expected=stop)
+    utils.assert_ast_equal(observed=info.start, expected=start)
+    utils.assert_ast_equal(observed=info.stop, expected=stop)
     if step is not None:
-        test_utils.assert_ast_equal(observed=info.step, expected=step)
+        utils.assert_ast_equal(observed=info.step, expected=step)
     else:
         assert info.step is None
 
@@ -162,7 +164,7 @@ def test_analyze_range_invalid(code: str) -> None:
     ],
 )
 def test_reduce_stop_parameter(before: str, after: str) -> None:
-    test_utils.assert_ast_equal(
+    utils.assert_ast_equal(
         analyzers.reduce_stop_parameter(ast_utils.parse_expr(before)),
         ast_utils.parse_expr(after),
     )
