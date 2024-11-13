@@ -34,16 +34,21 @@ Homepage = "https://github.com/google/latexify_py"
 "Bug Tracker" = "https://github.com/google/latexify_py/issues"
 
 [project.optional-dependencies]
-dev = [
-    "notebook>=6.5.1",
-    "numpy>=2.0",
+test = [
+    "notebook",
+    "numpy",
+    "jaxtyping",
+    "pytest",
 ]
 
-[tool.hatch.envs.dev]
-features = ["dev"]
+[tool.ruff.lint]
+ignore = ["N802", "EM101", "EM102"]
+
+[tool.hatch.envs.hatch-test]
+features = ["test"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src"]
+packages = ["src/latexify"]
 
 [tool.hatch.version]
-path = "src/_version.py"
+path = "src/latexify/_version.py"
