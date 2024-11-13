@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
-import ast
+from typing import TYPE_CHECKING
 
 import pytest
 from latexify import ast_utils
 from latexify.transformers import prefix_trimmer
 
 from .. import utils
+
+if TYPE_CHECKING:
+    import ast
 
 # For convenience
 make_name = ast_utils.make_name

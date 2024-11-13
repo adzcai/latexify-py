@@ -5,8 +5,10 @@ from __future__ import annotations
 import ast
 import functools
 import sys
-from collections.abc import Callable
-from typing import cast
+from typing import TYPE_CHECKING, cast
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 def require_at_least(
@@ -109,7 +111,7 @@ def assert_ast_equal(observed: ast.AST, expected: ast.AST) -> None:
     Raises:
         AssertionError: observed and expected represent different ASTs.
     """
-    if sys.version_info.minor >= 9:
+    if sys.version_info >= (3, 9):
         assert ast_equal(
             observed, expected
         ), f"""\

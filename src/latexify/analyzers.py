@@ -85,7 +85,7 @@ def reduce_stop_parameter(node: ast.expr) -> ast.expr:
     # Treatment for Python 3.7.
     rhs = (
         ast.Constant(value=node.right.n)
-        if sys.version_info.minor < 8 and isinstance(node.right, ast.Num)
+        if sys.version_info < (3, 8) and isinstance(node.right, ast.Num)
         else node.right
     )
 

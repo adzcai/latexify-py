@@ -33,6 +33,6 @@ def test_parse_function_with_posonlyargs() -> None:
 def test_parse_function_with_lambda() -> None:
     with pytest.raises(exceptions.LatexifySyntaxError, match=r"^Not a function\.$"):
         parser.parse_function(lambda: ())
+    x = lambda: ()  # noqa: E731
     with pytest.raises(exceptions.LatexifySyntaxError, match=r"^Not a function\.$"):
-        x = lambda: ()  # noqa: E731
         parser.parse_function(x)

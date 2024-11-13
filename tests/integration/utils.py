@@ -1,5 +1,7 @@
 """Utilities for integration tests."""
 
+# ruff: noqa: SLF001
+
 from __future__ import annotations
 
 from typing import Any, Callable
