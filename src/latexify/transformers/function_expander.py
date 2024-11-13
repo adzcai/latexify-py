@@ -2,9 +2,12 @@ from __future__ import annotations
 
 import ast
 import functools
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 from latexify import ast_utils, exceptions
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 # TODO(ZibingZhang): handle mutually recursive function expansions
@@ -29,11 +32,7 @@ class FunctionExpander(ast.NodeTransformer):
     def visit_Call(self, node: ast.Call) -> ast.AST:
         """Visit a Call node."""
         func_name = ast_utils.extract_function_name_or_none(node)
-        if (
-            func_name is not None
-            and func_name in self._functions
-            and func_name in _FUNCTION_EXPANDERS
-        ):
+        if func_name is not None and func_name in self._functions and func_name in _FUNCTION_EXPANDERS:
             return _FUNCTION_EXPANDERS[func_name](self, node)
 
         kwargs = {
@@ -42,9 +41,7 @@ class FunctionExpander(ast.NodeTransformer):
         }
 
         if hasattr(node, "keywords"):
-            kwargs["keywords"] = [
-                ast.keyword(arg=x.arg, value=self.visit(x.value)) for x in node.keywords
-            ]
+            kwargs["keywords"] = [ast.keyword(arg=x.arg, value=self.visit(x.value)) for x in node.keywords]
 
         return ast.Call(**kwargs)
 
@@ -108,9 +105,7 @@ def _hypot_expander(function_expander: FunctionExpander, node: ast.Call) -> ast.
         for arg in node.args
     ]
 
-    args_reduced = functools.reduce(
-        lambda a, b: ast.BinOp(left=a, op=ast.Add(), right=b), args
-    )
+    args_reduced = functools.reduce(lambda a, b: ast.BinOp(left=a, op=ast.Add(), right=b), args)
     return ast.Call(
         func=ast.Name(id="sqrt", ctx=ast.Load()),
         args=[args_reduced],
@@ -144,8 +139,7 @@ def _check_num_args(node: ast.Call, nargs: int) -> None:
     if len(node.args) != nargs:
         fn_name = ast_utils.extract_function_name_or_none(node)
         raise exceptions.LatexifySyntaxError(
-            f"Incorrect number of arguments for {fn_name}."
-            f" expected: {nargs}, but got {len(node.args)}"
+            f"Incorrect number of arguments for {fn_name}." f" expected: {nargs}, but got {len(node.args)}"
         )
 
 

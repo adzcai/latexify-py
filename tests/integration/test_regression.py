@@ -1,10 +1,12 @@
 """End-to-end test cases of function."""
 
+# ruff: noqa: B018
+
 from __future__ import annotations
 
 import math
 
-from .utils import check_function
+from tests.integration.utils import check_function
 
 
 def test_quadratic_solution() -> None:
@@ -36,28 +38,19 @@ def test_x_times_beta() -> None:
     def xtimesbeta(x, beta):
         return x * beta
 
-    latex_without_symbols = (
-        r"\mathrm{xtimesbeta}(x, \mathrm{beta}) = x \cdot \mathrm{beta}"
-    )
+    latex_without_symbols = r"\mathrm{xtimesbeta}(x, \mathrm{beta}) = x \cdot \mathrm{beta}"
     check_function(xtimesbeta, latex_without_symbols)
-    check_function(
-        xtimesbeta, latex_without_symbols, use_math_symbols=False
-    )
+    check_function(xtimesbeta, latex_without_symbols, use_math_symbols=False)
 
     latex_with_symbols = r"\mathrm{xtimesbeta}(x, \beta) = x \beta"
-    check_function(
-        xtimesbeta, latex_with_symbols, use_math_symbols=True
-    )
+    check_function(xtimesbeta, latex_with_symbols, use_math_symbols=True)
 
 
 def test_sum_with_limit_1arg() -> None:
     def sum_with_limit(n):
         return sum(i**2 for i in range(n))
 
-    latex = (
-        r"\mathrm{sum\_with\_limit}(n) = \sum_{i = 0}^{n - 1}"
-        r" \mathopen{}\left({i^{2}}\mathclose{}\right)"
-    )
+    latex = r"\mathrm{sum\_with\_limit}(n) = \sum_{i = 0}^{n - 1}" r" \mathopen{}\left({i^{2}}\mathclose{}\right)"
     check_function(sum_with_limit, latex)
 
 
@@ -65,10 +58,7 @@ def test_sum_with_limit_2args() -> None:
     def sum_with_limit(a, n):
         return sum(i**2 for i in range(a, n))
 
-    latex = (
-        r"\mathrm{sum\_with\_limit}(a, n) = \sum_{i = a}^{n - 1}"
-        r" \mathopen{}\left({i^{2}}\mathclose{}\right)"
-    )
+    latex = r"\mathrm{sum\_with\_limit}(a, n) = \sum_{i = a}^{n - 1}" r" \mathopen{}\left({i^{2}}\mathclose{}\right)"
     check_function(sum_with_limit, latex)
 
 
@@ -76,10 +66,7 @@ def test_sum_with_reducible_limit() -> None:
     def sum_with_limit(n):
         return sum(i for i in range(n + 1))
 
-    latex = (
-        r"\mathrm{sum\_with\_limit}(n) = \sum_{i = 0}^{n}"
-        r" \mathopen{}\left({i}\mathclose{}\right)"
-    )
+    latex = r"\mathrm{sum\_with\_limit}(n) = \sum_{i = 0}^{n}" r" \mathopen{}\left({i}\mathclose{}\right)"
     check_function(sum_with_limit, latex)
 
 
@@ -87,10 +74,7 @@ def test_sum_with_irreducible_limit() -> None:
     def sum_with_limit(n):
         return sum(i for i in range(n * 3))
 
-    latex = (
-        r"\mathrm{sum\_with\_limit}(n) = \sum_{i = 0}^{n \cdot 3 - 1}"
-        r" \mathopen{}\left({i}\mathclose{}\right)"
-    )
+    latex = r"\mathrm{sum\_with\_limit}(n) = \sum_{i = 0}^{n \cdot 3 - 1}" r" \mathopen{}\left({i}\mathclose{}\right)"
     check_function(sum_with_limit, latex)
 
 
@@ -98,10 +82,7 @@ def test_prod_with_limit_1arg() -> None:
     def prod_with_limit(n):
         return math.prod(i**2 for i in range(n))
 
-    latex = (
-        r"\mathrm{prod\_with\_limit}(n) ="
-        r" \prod_{i = 0}^{n - 1} \mathopen{}\left({i^{2}}\mathclose{}\right)"
-    )
+    latex = r"\mathrm{prod\_with\_limit}(n) =" r" \prod_{i = 0}^{n - 1} \mathopen{}\left({i^{2}}\mathclose{}\right)"
     check_function(prod_with_limit, latex)
 
 
@@ -109,10 +90,7 @@ def test_prod_with_limit_2args() -> None:
     def prod_with_limit(a, n):
         return math.prod(i**2 for i in range(a, n))
 
-    latex = (
-        r"\mathrm{prod\_with\_limit}(a, n) ="
-        r" \prod_{i = a}^{n - 1} \mathopen{}\left({i^{2}}\mathclose{}\right)"
-    )
+    latex = r"\mathrm{prod\_with\_limit}(a, n) =" r" \prod_{i = a}^{n - 1} \mathopen{}\left({i^{2}}\mathclose{}\right)"
     check_function(prod_with_limit, latex)
 
 
@@ -120,10 +98,7 @@ def test_prod_with_reducible_limits() -> None:
     def prod_with_limit(n):
         return math.prod(i for i in range(n - 1))
 
-    latex = (
-        r"\mathrm{prod\_with\_limit}(n) ="
-        r" \prod_{i = 0}^{n - 2} \mathopen{}\left({i}\mathclose{}\right)"
-    )
+    latex = r"\mathrm{prod\_with\_limit}(n) =" r" \prod_{i = 0}^{n - 2} \mathopen{}\left({i}\mathclose{}\right)"
     check_function(prod_with_limit, latex)
 
 
@@ -131,10 +106,7 @@ def test_prod_with_irreducible_limit() -> None:
     def prod_with_limit(n):
         return math.prod(i for i in range(n * 3))
 
-    latex = (
-        r"\mathrm{prod\_with\_limit}(n) = "
-        r"\prod_{i = 0}^{n \cdot 3 - 1} \mathopen{}\left({i}\mathclose{}\right)"
-    )
+    latex = r"\mathrm{prod\_with\_limit}(n) = " r"\prod_{i = 0}^{n \cdot 3 - 1} \mathopen{}\left({i}\mathclose{}\right)"
     check_function(prod_with_limit, latex)
 
 
@@ -177,13 +149,7 @@ def test_reduce_assignments_double() -> None:
         b = a + a
         return 3 * b
 
-    latex_without_option = (
-        r"\begin{array}{l}"
-        r" a = x^{2} \\"
-        r" b = a + a \\"
-        r" f(x) = 3 b"
-        r" \end{array}"
-    )
+    latex_without_option = r"\begin{array}{l}" r" a = x^{2} \\" r" b = a + a \\" r" f(x) = 3 b" r" \end{array}"
 
     check_function(f, latex_without_option)
     check_function(f, latex_without_option, reduce_assignments=False)

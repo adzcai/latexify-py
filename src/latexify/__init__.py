@@ -4,7 +4,7 @@ try:
     from latexify import _version
 
     __version__ = _version.__version__
-except Exception:
+except ImportError:
     __version__ = ""
 
 from latexify import frontend, generate_latex

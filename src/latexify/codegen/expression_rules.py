@@ -138,9 +138,7 @@ BIN_OP_RULES: dict[type[ast.operator], BinOpRule] = {
         operand_right=BinOperandRule(wrap=False),
         is_wrapped=True,
     ),
-    ast.Mod: BinOpRule(
-        "", r" \mathbin{\%} ", "", operand_right=BinOperandRule(force=True)
-    ),
+    ast.Mod: BinOpRule("", r" \mathbin{\%} ", "", operand_right=BinOperandRule(force=True)),
     ast.Add: BinOpRule("", " + ", ""),
     ast.Sub: BinOpRule("", " - ", "", operand_right=BinOperandRule(force=True)),
     ast.LShift: BinOpRule("", r" \ll ", "", operand_right=BinOperandRule(force=True)),
@@ -153,9 +151,7 @@ BIN_OP_RULES: dict[type[ast.operator], BinOpRule] = {
 # Typeset for BinOp of sets.
 SET_BIN_OP_RULES: dict[type[ast.operator], BinOpRule] = {
     **BIN_OP_RULES,
-    ast.Sub: BinOpRule(
-        "", r" \setminus ", "", operand_right=BinOperandRule(force=True)
-    ),
+    ast.Sub: BinOpRule("", r" \setminus ", "", operand_right=BinOperandRule(force=True)),
     ast.BitAnd: BinOpRule("", r" \cap ", ""),
     ast.BitXor: BinOpRule("", r" \mathbin{\triangle} ", ""),
     ast.BitOr: BinOpRule("", r" \cup ", ""),
@@ -234,9 +230,7 @@ BUILTIN_FUNCS: dict[str, FunctionRule] = {
     "asinh": FunctionRule(r"\mathrm{arsinh}", is_unary=True),
     "atan": FunctionRule(r"\arctan", is_unary=True),
     "atanh": FunctionRule(r"\mathrm{artanh}", is_unary=True),
-    "ceil": FunctionRule(
-        r"\mathopen{}\left\lceil", r"\mathclose{}\right\rceil", is_wrapped=True
-    ),
+    "ceil": FunctionRule(r"\mathopen{}\left\lceil", r"\mathclose{}\right\rceil", is_wrapped=True),
     "cos": FunctionRule(r"\cos", is_unary=True),
     "cosh": FunctionRule(r"\cosh", is_unary=True),
     "cot": FunctionRule(r"\cot", is_unary=True),
@@ -246,9 +240,7 @@ BUILTIN_FUNCS: dict[str, FunctionRule] = {
     "exp": FunctionRule(r"\exp", is_unary=True),
     "fabs": FunctionRule(r"\mathopen{}\left|", r"\mathclose{}\right|", is_wrapped=True),
     "factorial": FunctionRule("", "!", is_unary=True),
-    "floor": FunctionRule(
-        r"\mathopen{}\left\lfloor", r"\mathclose{}\right\rfloor", is_wrapped=True
-    ),
+    "floor": FunctionRule(r"\mathopen{}\left\lfloor", r"\mathclose{}\right\rfloor", is_wrapped=True),
     "fsum": FunctionRule(r"\sum", is_unary=True),
     "gamma": FunctionRule(r"\Gamma"),
     "log": FunctionRule(r"\log", is_unary=True),

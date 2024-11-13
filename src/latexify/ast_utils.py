@@ -19,7 +19,7 @@ def parse_expr(code: str) -> ast.expr:
     return ast.parse(code, mode="eval").body
 
 
-def make_name(id: str) -> ast.Name:
+def make_name(id_: str) -> ast.Name:
     """Generates a new Name node.
 
     Args:
@@ -28,7 +28,7 @@ def make_name(id: str) -> ast.Name:
     Returns:
         Generated ast.Name.
     """
-    return ast.Name(id=id, ctx=ast.Load())
+    return ast.Name(id=id_, ctx=ast.Load())
 
 
 def make_attribute(value: ast.expr, attr: str):
@@ -67,11 +67,7 @@ def make_constant(value: Any) -> ast.expr:
             return ast.Str(s=value)
         if isinstance(value, bytes):
             return ast.Bytes(s=value)
-    elif (
-        value is None
-        or value is ...
-        or isinstance(value, (bool, int, float, complex, str, bytes))
-    ):
+    elif value is None or value is ... or isinstance(value, (bool, int, float, complex, str, bytes)):
         return ast.Constant(value=value)
 
     raise ValueError(f"Unsupported type to generate Constant: {type(value).__name__}")
@@ -86,7 +82,7 @@ def is_constant(node: ast.AST) -> bool:
     Returns:
         True if the node is a constant, False otherwise.
     """
-    if sys.version_info.minor < 8:
+    if sys.version_info < (3, 8):
         return isinstance(
             node,
             (ast.Bytes, ast.Constant, ast.Ellipsis, ast.NameConstant, ast.Num, ast.Str),
@@ -104,7 +100,7 @@ def is_str(node: ast.AST) -> bool:
     Returns:
         True if the node is a str constant, False otherwise.
     """
-    if sys.version_info.minor < 8 and isinstance(node, ast.Str):
+    if sys.version_info < (3, 8) and isinstance(node, ast.Str):
         return True
 
     return isinstance(node, ast.Constant) and isinstance(node.value, str)
@@ -119,18 +115,10 @@ def extract_int_or_none(node: ast.expr) -> int | None:
     Returns:
         Extracted int value, or None if extraction failed.
     """
-    if sys.version_info.minor < 8:
-        if (
-            isinstance(node, ast.Num)
-            and isinstance(node.n, int)
-            and not isinstance(node.n, bool)
-        ):
+    if sys.version_info < (3, 8):
+        if isinstance(node, ast.Num) and isinstance(node.n, int) and not isinstance(node.n, bool):
             return node.n
-    elif (
-        isinstance(node, ast.Constant)
-        and isinstance(node.value, int)
-        and not isinstance(node.n, bool)
-    ):
+    elif isinstance(node, ast.Constant) and isinstance(node.value, int) and not isinstance(node.n, bool):
         return node.value
 
     return None

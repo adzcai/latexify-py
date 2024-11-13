@@ -36,9 +36,7 @@ def test_get_latex_prefixes() -> None:
     assert generate_latex.get_latex(f, prefixes={"x"}) == latex_with_flag2
     assert generate_latex.get_latex(f, prefixes={"x.y"}) == latex_with_flag3
     assert generate_latex.get_latex(f, prefixes={"abc", "x.y.z"}) == latex_with_flag4
-    assert (
-        generate_latex.get_latex(f, prefixes={"abc", "x", "x.y.z"}) == latex_with_flag4
-    )
+    assert generate_latex.get_latex(f, prefixes={"abc", "x", "x.y.z"}) == latex_with_flag4
 
 
 def test_get_latex_reduce_assignments() -> None:

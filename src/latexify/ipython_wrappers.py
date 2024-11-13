@@ -14,7 +14,7 @@ class LatexifiedRepr(metaclass=ABCMeta):
 
     _fn: Callable[..., Any]
 
-    def __init__(self, fn: Callable[..., Any], **kwargs) -> None:
+    def __init__(self, fn: Callable[..., Any], **_kwargs) -> None:
         self._fn = fn
 
     @property
@@ -44,21 +44,21 @@ class LatexifiedRepr(metaclass=ABCMeta):
     @abstractmethod
     def _repr_html_(self) -> str | tuple[str, dict[str, Any]] | None:
         """IPython hook to display HTML visualization.
-        
+
         See https://ipython.readthedocs.io/en/stable/config/integrating.html
         """
 
     @abstractmethod
     def _repr_latex_(self) -> str | tuple[str, dict[str, Any]] | None:
         """IPython hook to display LaTeX visualization.
-        
+
         See https://ipython.readthedocs.io/en/stable/config/integrating.html
         """
 
 
 class LatexifiedAlgorithm(LatexifiedRepr):
     """Algorithm with latex representation.
-    
+
     IPython does not come with the `algpseudocode` LaTeX package,
     so we provide an alternative _ipython_latex representation.
     """
@@ -70,45 +70,29 @@ class LatexifiedAlgorithm(LatexifiedRepr):
         super().__init__(fn)
 
         try:
-            self._latex = generate_latex.get_latex(
-                fn, style=generate_latex.Style.ALGORITHMIC, **kwargs
-            )
+            self._latex = generate_latex.get_latex(fn, style=generate_latex.Style.ALGORITHMIC, **kwargs)
         except LatexifyError as e:
             self._latex = e
 
         try:
-            self._ipython_latex = generate_latex.get_latex(
-                fn, style=generate_latex.Style.IPYTHON_ALGORITHMIC, **kwargs
-            )
+            self._ipython_latex = generate_latex.get_latex(fn, style=generate_latex.Style.IPYTHON_ALGORITHMIC, **kwargs)
         except LatexifyError as e:
             self._ipython_latex = e
 
     def __str__(self) -> str:
-        return (
-            self._latex
-            if isinstance(self._latex, str)
-            else self._latex.describe()
-        )
+        return self._latex if isinstance(self._latex, str) else self._latex.describe()
 
     def _repr_html_(self) -> str | tuple[str, dict[str, Any]] | None:
         """IPython hook to display HTML visualization."""
         return (
             '<span style="color: red;">'
-            + (
-                "HTML output not supported"
-                if isinstance(self._ipython_latex, str)
-                else self._ipython_latex.describe()
-            )
+            + ("HTML output not supported" if isinstance(self._ipython_latex, str) else self._ipython_latex.describe())
             + "</span>"
         )
 
     def _repr_latex_(self) -> str | tuple[str, dict[str, Any]] | None:
         """IPython hook to display LaTeX visualization."""
-        return (
-            f"$ {self._ipython_latex} $"
-            if isinstance(self._ipython_latex, str)
-            else self._ipython_latex.describe()
-        )
+        return f"$ {self._ipython_latex} $" if isinstance(self._ipython_latex, str) else self._ipython_latex.describe()
 
 
 class LatexifiedFunction(LatexifiedRepr):
@@ -120,9 +104,7 @@ class LatexifiedFunction(LatexifiedRepr):
         super().__init__(fn, **kwargs)
 
         try:
-            self._latex = self._latex = generate_latex.get_latex(
-                fn, style=generate_latex.Style.FUNCTION, **kwargs
-            )
+            self._latex = self._latex = generate_latex.get_latex(fn, style=generate_latex.Style.FUNCTION, **kwargs)
             self._error = None
         except LatexifyError as e:
             self._latex = None
@@ -133,16 +115,8 @@ class LatexifiedFunction(LatexifiedRepr):
 
     def _repr_html_(self) -> str | tuple[str, dict[str, Any]] | None:
         """IPython hook to display HTML visualization."""
-        return (
-            '<span style="color: red;">' + self._error + "</span>"
-            if self._error is not None
-            else None
-        )
+        return '<span style="color: red;">' + self._error + "</span>" if self._error is not None else None
 
     def _repr_latex_(self) -> str | tuple[str, dict[str, Any]] | None:
         """IPython hook to display LaTeX visualization."""
-        return (
-            rf"$$ \displaystyle {self._latex} $$"
-            if self._latex is not None
-            else self._error
-        )
+        return rf"$$ \displaystyle {self._latex} $$" if self._latex is not None else self._error

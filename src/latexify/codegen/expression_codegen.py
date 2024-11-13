@@ -17,9 +17,7 @@ class ExpressionCodegen(ast.NodeVisitor):
     _bin_op_rules: dict[type[ast.operator], expression_rules.BinOpRule]
     _compare_ops: dict[type[ast.cmpop], str]
 
-    def __init__(
-        self, *, use_math_symbols: bool = False, use_set_symbols: bool = False
-    ) -> None:
+    def __init__(self, *, use_math_symbols: bool = False, use_set_symbols: bool = False) -> None:
         """Initializer.
 
         Args:
@@ -27,25 +25,13 @@ class ExpressionCodegen(ast.NodeVisitor):
                 surface (e.g., "alpha") to the LaTeX symbol (e.g., "\\alpha").
             use_set_symbols: Whether to use set symbols or not.
         """
-        self._identifier_converter = identifier_converter.IdentifierConverter(
-            use_math_symbols=use_math_symbols
-        )
+        self._identifier_converter = identifier_converter.IdentifierConverter(use_math_symbols=use_math_symbols)
 
-        self._bin_op_rules = (
-            expression_rules.SET_BIN_OP_RULES
-            if use_set_symbols
-            else expression_rules.BIN_OP_RULES
-        )
-        self._compare_ops = (
-            expression_rules.SET_COMPARE_OPS
-            if use_set_symbols
-            else expression_rules.COMPARE_OPS
-        )
+        self._bin_op_rules = expression_rules.SET_BIN_OP_RULES if use_set_symbols else expression_rules.BIN_OP_RULES
+        self._compare_ops = expression_rules.SET_COMPARE_OPS if use_set_symbols else expression_rules.COMPARE_OPS
 
     def generic_visit(self, node: ast.AST) -> str:
-        raise exceptions.LatexifyNotSupportedError(
-            f"Unsupported AST: {type(node).__name__}"
-        )
+        raise exceptions.LatexifyNotSupportedError(f"Unsupported AST: {type(node).__name__}")
 
     def visit_Tuple(self, node: ast.Tuple) -> str:
         """Visit a Tuple node."""
@@ -66,22 +52,14 @@ class ExpressionCodegen(ast.NodeVisitor):
         """Visit a ListComp node."""
         generators = [self.visit(comp) for comp in node.generators]
         return (
-            r"\mathopen{}\left[ "
-            + self.visit(node.elt)
-            + r" \mid "
-            + ", ".join(generators)
-            + r" \mathclose{}\right]"
+            r"\mathopen{}\left[ " + self.visit(node.elt) + r" \mid " + ", ".join(generators) + r" \mathclose{}\right]"
         )
 
     def visit_SetComp(self, node: ast.SetComp) -> str:
         """Visit a SetComp node."""
         generators = [self.visit(comp) for comp in node.generators]
         return (
-            r"\mathopen{}\left\{ "
-            + self.visit(node.elt)
-            + r" \mid "
-            + ", ".join(generators)
-            + r" \mathclose{}\right\}"
+            r"\mathopen{}\left\{ " + self.visit(node.elt) + r" \mid " + ", ".join(generators) + r" \mathclose{}\right\}"
         )
 
     def visit_comprehension(self, node: ast.comprehension) -> str:
@@ -109,7 +87,7 @@ class ExpressionCodegen(ast.NodeVisitor):
             return None
 
         name = ast_utils.extract_function_name_or_none(node)
-        assert name in ("fsum", "sum", "prod")
+        assert name in ("fsum", "sum", "prod"), name
 
         command = {
             "fsum": r"\sum",
@@ -119,10 +97,7 @@ class ExpressionCodegen(ast.NodeVisitor):
 
         elt, scripts = self._get_sum_prod_info(node.args[0])
         scripts_str = [rf"{command}_{{{lo}}}^{{{up}}}" for lo, up in scripts]
-        return (
-            " ".join(scripts_str)
-            + rf" \mathopen{{}}\left({{{elt}}}\mathclose{{}}\right)"
-        )
+        return " ".join(scripts_str) + rf" \mathopen{{}}\left({{{elt}}}\mathclose{{}}\right)"
 
     def _generate_matrix(self, node: ast.Call) -> str | None:
         """Generates matrix expression.
@@ -175,7 +150,7 @@ class ExpressionCodegen(ast.NodeVisitor):
             Generated LaTeX, or None if the node has unsupported syntax.
         """
         name = ast_utils.extract_function_name_or_none(node)
-        assert name == "zeros"
+        assert name == "zeros", name
 
         if len(node.args) != 1:
             return None
@@ -208,7 +183,7 @@ class ExpressionCodegen(ast.NodeVisitor):
             Generated LaTeX, or None if the node has unsupported syntax.
         """
         name = ast_utils.extract_function_name_or_none(node)
-        assert name == "identity"
+        assert name == "identity", name
 
         if len(node.args) != 1:
             return None
@@ -229,7 +204,7 @@ class ExpressionCodegen(ast.NodeVisitor):
             LatexifyError: Unsupported argument type given.
         """
         name = ast_utils.extract_function_name_or_none(node)
-        assert name == "transpose"
+        assert name == "transpose", name
 
         if len(node.args) != 1:
             return None
@@ -250,7 +225,7 @@ class ExpressionCodegen(ast.NodeVisitor):
             LatexifyError: Unsupported argument type given.
         """
         name = ast_utils.extract_function_name_or_none(node)
-        assert name == "det"
+        assert name == "det", name
 
         if len(node.args) != 1:
             return None
@@ -275,7 +250,7 @@ class ExpressionCodegen(ast.NodeVisitor):
             LatexifyError: Unsupported argument type given.
         """
         name = ast_utils.extract_function_name_or_none(node)
-        assert name == "matrix_rank"
+        assert name == "matrix_rank", name
 
         if len(node.args) != 1:
             return None
@@ -283,14 +258,10 @@ class ExpressionCodegen(ast.NodeVisitor):
         func_arg = node.args[0]
         if isinstance(func_arg, ast.Name):
             arg_id = rf"\mathbf{{{func_arg.id}}}"
-            return (
-                rf"\mathrm{{rank}} \mathopen{{}}\left( {arg_id} \mathclose{{}}\right)"
-            )
+            return rf"\mathrm{{rank}} \mathopen{{}}\left( {arg_id} \mathclose{{}}\right)"
         elif isinstance(func_arg, ast.List):
             matrix = self._generate_matrix(node)
-            return (
-                rf"\mathrm{{rank}} \mathopen{{}}\left( {matrix} \mathclose{{}}\right)"
-            )
+            return rf"\mathrm{{rank}} \mathopen{{}}\left( {matrix} \mathclose{{}}\right)"
 
         return None
 
@@ -304,7 +275,7 @@ class ExpressionCodegen(ast.NodeVisitor):
             LatexifyError: Unsupported argument type given.
         """
         name = ast_utils.extract_function_name_or_none(node)
-        assert name == "matrix_power"
+        assert name == "matrix_power", name
 
         if len(node.args) != 2:
             return None
@@ -330,7 +301,7 @@ class ExpressionCodegen(ast.NodeVisitor):
             LatexifyError: Unsupported argument type given.
         """
         name = ast_utils.extract_function_name_or_none(node)
-        assert name == "inv"
+        assert name == "inv", name
 
         if len(node.args) != 1:
             return None
@@ -352,7 +323,7 @@ class ExpressionCodegen(ast.NodeVisitor):
             LatexifyError: Unsupported argument type given.
         """
         name = ast_utils.extract_function_name_or_none(node)
-        assert name == "pinv"
+        assert name == "pinv", name
 
         if len(node.args) != 1:
             return None
@@ -397,11 +368,7 @@ class ExpressionCodegen(ast.NodeVisitor):
             return special_latex
 
         # Obtains the codegen rule.
-        rule = (
-            expression_rules.BUILTIN_FUNCS.get(func_name)
-            if func_name is not None
-            else None
-        )
+        rule = expression_rules.BUILTIN_FUNCS.get(func_name) if func_name is not None else None
 
         if rule is None:
             rule = expression_rules.FunctionRule(self.visit(node.func))
@@ -414,16 +381,13 @@ class ExpressionCodegen(ast.NodeVisitor):
             # Factorial "x!" is treated as a special case: it requires both inner/outer
             # parentheses for correct interpretation.
             force_wrap_factorial = isinstance(arg, ast.Call) and (
-                func_name == "factorial"
-                or ast_utils.extract_function_name_or_none(arg) == "factorial"
+                func_name == "factorial" or ast_utils.extract_function_name_or_none(arg) == "factorial"
             )
             # Note(odashi):
             # Wrapping is also required if the argument is pow.
             # https://github.com/google/latexify_py/issues/189
             force_wrap_pow = isinstance(arg, ast.BinOp) and isinstance(arg.op, ast.Pow)
-            arg_latex = self._wrap_operand(
-                arg, precedence, force_wrap_factorial or force_wrap_pow
-            )
+            arg_latex = self._wrap_operand(arg, precedence, force_wrap=force_wrap_factorial or force_wrap_pow)
             elements = [rule.left, arg_latex, rule.right]
         else:
             arg_latex = ", ".join(self.visit(arg) for arg in node.args)
@@ -476,13 +440,11 @@ class ExpressionCodegen(ast.NodeVisitor):
         return codegen_utils.convert_constant(node.value)
 
     # Until Python 3.7
-    def visit_Ellipsis(self, node: ast.Ellipsis) -> str:
+    def visit_Ellipsis(self, _node: ast.Ellipsis) -> str:
         """Visit an Ellipsis node."""
         return codegen_utils.convert_constant(...)
 
-    def _wrap_operand(
-        self, child: ast.expr, parent_prec: int, force_wrap: bool = False
-    ) -> str:
+    def _wrap_operand(self, child: ast.expr, parent_prec: int, *, force_wrap: bool = False) -> str:
         """Wraps the operand subtree with parentheses.
 
         Args:
@@ -522,11 +484,7 @@ class ExpressionCodegen(ast.NodeVisitor):
 
         if isinstance(child, ast.Call):
             child_fn_name = ast_utils.extract_function_name_or_none(child)
-            rule = (
-                expression_rules.BUILTIN_FUNCS.get(child_fn_name)
-                if child_fn_name is not None
-                else None
-            )
+            rule = expression_rules.BUILTIN_FUNCS.get(child_fn_name) if child_fn_name is not None else None
             if rule is not None and rule.is_wrapped:
                 return self.visit(child)
 
@@ -540,9 +498,7 @@ class ExpressionCodegen(ast.NodeVisitor):
 
         child_prec = expression_rules.get_precedence(child)
 
-        if child_prec > parent_prec or (
-            child_prec == parent_prec and not operand_rule.force
-        ):
+        if child_prec > parent_prec or (child_prec == parent_prec and not operand_rule.force):
             return latex
 
         return rf"\mathopen{{}}\left( {latex} \mathclose{{}}\right)"
@@ -551,9 +507,7 @@ class ExpressionCodegen(ast.NodeVisitor):
     _r_bracket_pattern = re.compile(r".*\\mathclose[^ ]+$")
     _r_word_pattern = re.compile(r"\\mathrm\{[^ ]+\}$")
 
-    def _should_remove_multiply_op(
-        self, l_latex: str, r_latex: str, l_expr: ast.expr, r_expr: ast.expr
-    ):
+    def _should_remove_multiply_op(self, l_latex: str, r_latex: str, l_expr: ast.expr, r_expr: ast.expr):
         """Determine whether the multiply operator should be removed or not.
 
         See also:
@@ -629,9 +583,10 @@ class ExpressionCodegen(ast.NodeVisitor):
         lhs = self._wrap_binop_operand(node.left, prec, rule.operand_left)
         rhs = self._wrap_binop_operand(node.right, prec, rule.operand_right)
 
-        if type(node.op) in [ast.Mult, ast.MatMult]:
-            if self._should_remove_multiply_op(lhs, rhs, node.left, node.right):
-                return f"{rule.latex_left}{lhs} {rhs}{rule.latex_right}"
+        if type(node.op) in [ast.Mult, ast.MatMult] and self._should_remove_multiply_op(
+            lhs, rhs, node.left, node.right
+        ):
+            return f"{rule.latex_left}{lhs} {rhs}{rule.latex_right}"
 
         return f"{rule.latex_left}{lhs}{rule.latex_middle}{rhs}{rule.latex_right}"
 
@@ -684,9 +639,7 @@ class ExpressionCodegen(ast.NodeVisitor):
             which are used in _get_sum_prod_info, or None if the analysis failed.
         """
         if not (
-            isinstance(node.iter, ast.Call)
-            and isinstance(node.iter.func, ast.Name)
-            and node.iter.func.id == "range"
+            isinstance(node.iter, ast.Call) and isinstance(node.iter.func, ast.Name) and node.iter.func.id == "range"
         ):
             return None
 
@@ -706,10 +659,7 @@ class ExpressionCodegen(ast.NodeVisitor):
         ):
             return None
 
-        if range_info.start_int is None:
-            lower_rhs = self.visit(range_info.start)
-        else:
-            lower_rhs = str(range_info.start_int)
+        lower_rhs = self.visit(range_info.start) if range_info.start_int is None else str(range_info.start_int)
 
         if range_info.stop_int is None:
             upper = self.visit(analyzers.reduce_stop_parameter(range_info.stop))
@@ -718,9 +668,7 @@ class ExpressionCodegen(ast.NodeVisitor):
 
         return lower_rhs, upper
 
-    def _get_sum_prod_info(
-        self, node: ast.GeneratorExp
-    ) -> tuple[str, list[tuple[str, str]]]:
+    def _get_sum_prod_info(self, node: ast.GeneratorExp) -> tuple[str, list[tuple[str, str]]]:
         r"""Process GeneratorExp for sum and prod functions.
 
         Args:
@@ -789,8 +737,7 @@ class ExpressionCodegen(ast.NodeVisitor):
         """Visitor a Subscript node."""
         value, indices = self._convert_nested_subscripts(node)
 
-        # TODO(odashi):
-        # "[i][j][...]" may be a possible representation as well as "i, j. ..."
+        # TODO(odashi): "[i][j][...]" may be a possible representation as well as "i, j. ..."
         indices_str = ", ".join(indices)
 
         return f"{value}_{{{indices_str}}}"

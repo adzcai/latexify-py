@@ -34,23 +34,17 @@ def test_arg() -> None:
 
 def test_paren() -> None:
     assert Latex.paren("foo") == Latex(r"\mathopen{}\left( foo \mathclose{}\right)")
-    assert Latex.paren(Latex("foo")) == Latex(
-        r"\mathopen{}\left( foo \mathclose{}\right)"
-    )
+    assert Latex.paren(Latex("foo")) == Latex(r"\mathopen{}\left( foo \mathclose{}\right)")
 
 
 def test_curly() -> None:
     assert Latex.curly("foo") == Latex(r"\mathopen{}\left\{ foo \mathclose{}\right\}")
-    assert Latex.curly(Latex("foo")) == Latex(
-        r"\mathopen{}\left\{ foo \mathclose{}\right\}"
-    )
+    assert Latex.curly(Latex("foo")) == Latex(r"\mathopen{}\left\{ foo \mathclose{}\right\}")
 
 
 def test_square() -> None:
     assert Latex.square("foo") == Latex(r"\mathopen{}\left[ foo \mathclose{}\right]")
-    assert Latex.square(Latex("foo")) == Latex(
-        r"\mathopen{}\left[ foo \mathclose{}\right]"
-    )
+    assert Latex.square(Latex("foo")) == Latex(r"\mathopen{}\left[ foo \mathclose{}\right]")
 
 
 def test_command() -> None:
@@ -70,30 +64,18 @@ def test_environment() -> None:
     assert Latex.environment("a") == Latex(r"\begin{a} \end{a}")
     assert Latex.environment("a", options=[]) == Latex(r"\begin{a} \end{a}")
     assert Latex.environment("a", options=["b"]) == Latex(r"\begin{a}[b] \end{a}")
-    assert Latex.environment("a", options=[Latex("b")]) == Latex(
-        r"\begin{a}[b] \end{a}"
-    )
-    assert Latex.environment("a", options=["b", "c"]) == Latex(
-        r"\begin{a}[b][c] \end{a}"
-    )
+    assert Latex.environment("a", options=[Latex("b")]) == Latex(r"\begin{a}[b] \end{a}")
+    assert Latex.environment("a", options=["b", "c"]) == Latex(r"\begin{a}[b][c] \end{a}")
     assert Latex.environment("a", args=[]) == Latex(r"\begin{a} \end{a}")
     assert Latex.environment("a", args=["b"]) == Latex(r"\begin{a}{b} \end{a}")
     assert Latex.environment("a", args=[Latex("b")]) == Latex(r"\begin{a}{b} \end{a}")
     assert Latex.environment("a", args=["b", "c"]) == Latex(r"\begin{a}{b}{c} \end{a}")
     assert Latex.environment("a", content="b") == Latex(r"\begin{a} b \end{a}")
     assert Latex.environment("a", content=Latex("b")) == Latex(r"\begin{a} b \end{a}")
-    assert Latex.environment("a", options=["b"], args=["c"]) == Latex(
-        r"\begin{a}[b]{c} \end{a}"
-    )
-    assert Latex.environment("a", options=["b"], content="c") == Latex(
-        r"\begin{a}[b] c \end{a}"
-    )
-    assert Latex.environment("a", args=["b"], content="c") == Latex(
-        r"\begin{a}{b} c \end{a}"
-    )
-    assert Latex.environment("a", options=["b"], args=["c"], content="d") == Latex(
-        r"\begin{a}[b]{c} d \end{a}"
-    )
+    assert Latex.environment("a", options=["b"], args=["c"]) == Latex(r"\begin{a}[b]{c} \end{a}")
+    assert Latex.environment("a", options=["b"], content="c") == Latex(r"\begin{a}[b] c \end{a}")
+    assert Latex.environment("a", args=["b"], content="c") == Latex(r"\begin{a}{b} c \end{a}")
+    assert Latex.environment("a", options=["b"], args=["c"], content="d") == Latex(r"\begin{a}[b]{c} d \end{a}")
 
 
 def test_join() -> None:

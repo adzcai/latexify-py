@@ -8,7 +8,7 @@ from typing import Any
 import pytest
 from latexify import ast_utils
 
-from . import utils
+from tests import utils
 
 
 def test_parse_expr() -> None:
@@ -23,9 +23,7 @@ def test_parse_expr() -> None:
 
 
 def test_make_name() -> None:
-    utils.assert_ast_equal(
-        ast_utils.make_name("foo"), ast.Name(id="foo", ctx=ast.Load())
-    )
+    utils.assert_ast_equal(ast_utils.make_name("foo"), ast.Name(id="foo", ctx=ast.Load()))
 
 
 def test_make_attribute() -> None:

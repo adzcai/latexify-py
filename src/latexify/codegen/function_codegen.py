@@ -38,15 +38,11 @@ class FunctionCodegen(ast.NodeVisitor):
         self._expression_codegen = expression_codegen.ExpressionCodegen(
             use_math_symbols=use_math_symbols, use_set_symbols=use_set_symbols
         )
-        self._identifier_converter = identifier_converter.IdentifierConverter(
-            use_math_symbols=use_math_symbols
-        )
+        self._identifier_converter = identifier_converter.IdentifierConverter(use_math_symbols=use_math_symbols)
         self._use_signature = use_signature
 
     def generic_visit(self, node: ast.AST) -> str:
-        raise exceptions.LatexifyNotSupportedError(
-            f"Unsupported AST: {type(node).__name__}"
-        )
+        raise exceptions.LatexifyNotSupportedError(f"Unsupported AST: {type(node).__name__}")
 
     def visit_Module(self, node: ast.Module) -> str:
         """Visit a Module node."""
@@ -58,9 +54,7 @@ class FunctionCodegen(ast.NodeVisitor):
         name_str = self._identifier_converter.convert(node.name)[0]
 
         # Arguments
-        arg_strs = [
-            self._identifier_converter.convert(arg.arg)[0] for arg in node.args.args
-        ]
+        arg_strs = [self._identifier_converter.convert(arg.arg)[0] for arg in node.args.args]
 
         body_strs: list[str] = []
 
@@ -71,22 +65,17 @@ class FunctionCodegen(ast.NodeVisitor):
 
             if not isinstance(child, ast.Assign):
                 raise exceptions.LatexifyNotSupportedError(
-                    "Codegen supports only Assign nodes in multiline functions, "
-                    f"but got: {type(child).__name__}"
+                    "Codegen supports only Assign nodes in multiline functions, " f"but got: {type(child).__name__}"
                 )
             body_strs.append(self.visit(child))
 
         return_stmt = node.body[-1]
 
-        if sys.version_info.minor >= 10:
+        if sys.version_info >= (3, 10):
             if not isinstance(return_stmt, (ast.Return, ast.If, ast.Match)):
-                raise exceptions.LatexifySyntaxError(
-                    f"Unsupported last statement: {type(return_stmt).__name__}"
-                )
+                raise exceptions.LatexifySyntaxError(f"Unsupported last statement: {type(return_stmt).__name__}")
         elif not isinstance(return_stmt, (ast.Return, ast.If)):
-            raise exceptions.LatexifySyntaxError(
-                f"Unsupported last statement: {type(return_stmt).__name__}"
-            )
+            raise exceptions.LatexifySyntaxError(f"Unsupported last statement: {type(return_stmt).__name__}")
 
         # Function signature: f(x, ...)
         signature_str = name_str + "(" + ", ".join(arg_strs) + ")"
@@ -126,9 +115,7 @@ class FunctionCodegen(ast.NodeVisitor):
 
         while isinstance(current_stmt, ast.If):
             if len(current_stmt.body) != 1 or len(current_stmt.orelse) != 1:
-                raise exceptions.LatexifySyntaxError(
-                    "Multiple statements are not supported in If nodes."
-                )
+                raise exceptions.LatexifySyntaxError("Multiple statements are not supported in If nodes.")
 
             cond_latex = self._expression_codegen.visit(current_stmt.test)
             true_latex = self.visit(current_stmt.body[0])
@@ -145,35 +132,23 @@ class FunctionCodegen(ast.NodeVisitor):
             and isinstance(node.cases[-1].pattern, ast.MatchAs)
             and node.cases[-1].pattern.name is None
         ):
-            raise exceptions.LatexifySyntaxError(
-                "Match statement must contain the wildcard."
-            )
+            raise exceptions.LatexifySyntaxError("Match statement must contain the wildcard.")
 
         subject_latex = self._expression_codegen.visit(node.subject)
         case_latexes: list[str] = []
 
         for i, case in enumerate(node.cases):
             if len(case.body) != 1 or not isinstance(case.body[0], ast.Return):
-                raise exceptions.LatexifyNotSupportedError(
-                    "Match cases must contain exactly 1 return statement."
-                )
+                raise exceptions.LatexifyNotSupportedError("Match cases must contain exactly 1 return statement.")
 
             if i < len(node.cases) - 1:
                 body_latex = self.visit(case.body[0])
                 cond_latex = self.visit(case.pattern)
-                case_latexes.append(
-                    body_latex + r", & \mathrm{if} \ " + subject_latex + cond_latex
-                )
+                case_latexes.append(body_latex + r", & \mathrm{if} \ " + subject_latex + cond_latex)
             else:
-                case_latexes.append(
-                    self.visit(node.cases[-1].body[0]) + r", & \mathrm{otherwise}"
-                )
+                case_latexes.append(self.visit(node.cases[-1].body[0]) + r", & \mathrm{otherwise}")
 
-        return (
-            r"\left\{ \begin{array}{ll} "
-            + r" \\ ".join(case_latexes)
-            + r" \end{array} \right."
-        )
+        return r"\left\{ \begin{array}{ll} " + r" \\ ".join(case_latexes) + r" \end{array} \right."
 
     def visit_MatchValue(self, node: ast.MatchValue) -> str:
         """Visit a MatchValue node"""

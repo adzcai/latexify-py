@@ -27,7 +27,5 @@ def test_convert_constant(constant: Any, latex: str) -> None:
 
 
 def test_convert_constant_unsupported_constant() -> None:
-    with pytest.raises(
-        exceptions.LatexifyNotSupportedError, match="^Unrecognized constant: "
-    ):
+    with pytest.raises(exceptions.LatexifyNotSupportedError, match="^Unrecognized constant: "):
         convert_constant({})

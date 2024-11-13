@@ -58,7 +58,7 @@ class PrefixTrimmer(ast.NodeTransformer):
 
         if isinstance(node, ast.Attribute):
             parent = self._get_prefix(node.value)
-            return parent + (node.attr,) if parent is not None else None
+            return (*parent, node.attr) if parent is not None else None
 
         return None
 

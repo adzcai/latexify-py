@@ -7,7 +7,7 @@ import ast
 import pytest
 from latexify import analyzers, ast_utils, exceptions
 
-from . import utils
+from tests import utils
 
 
 @utils.require_at_least(8)
@@ -147,9 +147,7 @@ def test_analyze_range_invalid(code: str) -> None:
     node = ast_utils.parse_expr(code)
     assert isinstance(node, ast.Call)
 
-    with pytest.raises(
-        exceptions.LatexifySyntaxError, match=r"^Unsupported AST for analyze_range\.$"
-    ):
+    with pytest.raises(exceptions.LatexifySyntaxError, match=r"^Unsupported AST for analyze_range\.$"):
         analyzers.analyze_range(node)
 
 

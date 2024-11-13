@@ -1,5 +1,7 @@
 """Tests for latexify.codegen.expression_rules."""
 
+# ruff: noqa: SLF001
+
 from __future__ import annotations
 
 import ast

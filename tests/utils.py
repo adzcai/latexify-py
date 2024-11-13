@@ -87,10 +87,7 @@ def ast_equal(observed: ast.AST, expected: ast.AST) -> bool:
             elif isinstance(ve, list):
                 vo = cast(list, vo)
                 assert len(vo) == len(ve)
-                assert all(
-                    ast_equal(cast(ast.AST, co), cast(ast.AST, ce))
-                    for co, ce in zip(vo, ve)
-                )
+                assert all(ast_equal(cast(ast.AST, co), cast(ast.AST, ce)) for co, ce in zip(vo, ve))
             else:
                 assert type(vo) is type(ve)
                 assert vo == ve
@@ -112,17 +109,13 @@ def assert_ast_equal(observed: ast.AST, expected: ast.AST) -> None:
         AssertionError: observed and expected represent different ASTs.
     """
     if sys.version_info >= (3, 9):
-        assert ast_equal(
-            observed, expected
-        ), f"""\
+        assert ast_equal(observed, expected), f"""\
 AST does not match.
 observed={ast.dump(observed, indent=4)}
 expected={ast.dump(expected, indent=4)}
 """
     else:
-        assert ast_equal(
-            observed, expected
-        ), f"""\
+        assert ast_equal(observed, expected), f"""\
 AST does not match.
 observed={ast.dump(observed)}
 expected={ast.dump(expected)}

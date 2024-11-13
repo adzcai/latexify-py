@@ -35,14 +35,8 @@ def test_visit_functiondef_use_signature() -> None:
     latex_without_flag = "x"
     latex_with_flag = r"f(x) = x"
     assert function_codegen.FunctionCodegen().visit(tree) == latex_with_flag
-    assert (
-        function_codegen.FunctionCodegen(use_signature=False).visit(tree)
-        == latex_without_flag
-    )
-    assert (
-        function_codegen.FunctionCodegen(use_signature=True).visit(tree)
-        == latex_with_flag
-    )
+    assert function_codegen.FunctionCodegen(use_signature=False).visit(tree) == latex_without_flag
+    assert function_codegen.FunctionCodegen(use_signature=True).visit(tree) == latex_with_flag
 
 
 def test_visit_functiondef_ignore_docstring() -> None:

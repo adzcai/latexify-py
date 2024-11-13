@@ -7,7 +7,7 @@ import ast
 import pytest
 from latexify.transformers.identifier_replacer import IdentifierReplacer
 
-from .. import utils
+from tests import utils
 
 
 def test_invalid_mapping() -> None:

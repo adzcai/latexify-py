@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import textwrap
 
-from .utils import check_algorithm
+from tests.integration.utils import check_algorithm
 
 
 def test_factorial() -> None:
@@ -47,7 +47,7 @@ def test_collatz() -> None:
     def collatz(n):
         iterations = 0
         while n > 1:
-            if n % 2 == 0:
+            if n % 2 == 0:  # noqa: SIM108
                 n = n // 2
             else:
                 n = 3 * n + 1

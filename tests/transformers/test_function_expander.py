@@ -7,7 +7,7 @@ import ast
 from latexify import ast_utils
 from latexify.transformers.function_expander import FunctionExpander
 
-from .. import utils
+from tests import utils
 
 
 def test_preserve_keywords() -> None:

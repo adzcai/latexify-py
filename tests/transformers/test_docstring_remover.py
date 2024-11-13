@@ -5,7 +5,7 @@ import ast
 from latexify import ast_utils, parser
 from latexify.transformers.docstring_remover import DocstringRemover
 
-from .. import utils
+from tests import utils
 
 
 def test_remove_docstrings() -> None:

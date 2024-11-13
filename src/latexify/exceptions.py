@@ -16,14 +16,12 @@ class LatexifyError(Exception):
         return f"{self.__class__.__name__}: {self!s}"
 
 
-
 class LatexifyNotSupportedError(LatexifyError):
     """Some subtree in the AST is not supported by the current implementation.
 
     This error is raised when the library discovered incompatible syntaxes due to lack
     of the implementation. Possibly this error would be resolved in the future.
     """
-
 
 
 class LatexifySyntaxError(LatexifyError):
@@ -33,4 +31,3 @@ class LatexifySyntaxError(LatexifyError):
     be processed anymore. This error is essential, and wouldn't be resolved in the
     future.
     """
-

@@ -27,12 +27,8 @@ from latexify.codegen import identifier_converter
         ("foo", True, False, (r"foo", False)),
     ],
 )
-def test_identifier_converter(
-    name: str, use_math_symbols: bool, use_mathrm: bool, expected: tuple[str, bool]
-) -> None:
+def test_identifier_converter(name: str, use_math_symbols: bool, use_mathrm: bool, expected: tuple[str, bool]) -> None:
     assert (
-        identifier_converter.IdentifierConverter(
-            use_math_symbols=use_math_symbols, use_mathrm=use_mathrm
-        ).convert(name)
+        identifier_converter.IdentifierConverter(use_math_symbols=use_math_symbols, use_mathrm=use_mathrm).convert(name)
         == expected
     )

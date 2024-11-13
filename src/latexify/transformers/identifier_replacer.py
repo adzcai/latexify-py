@@ -49,7 +49,7 @@ class IdentifierReplacer(ast.NodeTransformer):
         """Visit a FunctionDef node."""
         visited = cast(ast.FunctionDef, super().generic_visit(node))
 
-        if sys.version_info.minor < 8:
+        if sys.version_info < (3, 8):
             args = ast.arguments(
                 args=self._replace_args(visited.args.args),
                 kwonlyargs=self._replace_args(visited.args.kwonlyargs),

@@ -5,12 +5,14 @@ from __future__ import annotations
 import ast
 import inspect
 import textwrap
-from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import dill  # type: ignore[import]
 
 from latexify import exceptions
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 def parse_function(fn: Callable[..., Any]) -> ast.Module:
@@ -24,7 +26,7 @@ def parse_function(fn: Callable[..., Any]) -> ast.Module:
     """
     try:
         source = inspect.getsource(fn)
-    except Exception:
+    except OSError:
         # Maybe running on console.
         source = dill.source.getsource(fn)
 

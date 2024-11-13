@@ -37,11 +37,7 @@ def analyze_range(node: ast.Call) -> RangeInfo:
     Raises:
         LatexifySyntaxError: Analysis failed.
     """
-    if not (
-        isinstance(node.func, ast.Name)
-        and node.func.id == "range"
-        and 1 <= len(node.args) <= 3
-    ):
+    if not (isinstance(node.func, ast.Name) and node.func.id == "range" and 1 <= len(node.args) <= 3):
         raise exceptions.LatexifySyntaxError("Unsupported AST for analyze_range.")
 
     num_args = len(node.args)

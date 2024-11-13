@@ -7,7 +7,7 @@ import ast
 from latexify import ast_utils, parser
 from latexify.transformers.assignment_reducer import AssignmentReducer
 
-from .. import utils
+from tests import utils
 
 
 def _make_ast(body: list[ast.stmt]) -> ast.Module:

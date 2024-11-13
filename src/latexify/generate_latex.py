@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import dataclasses
 import enum
-from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from latexify import codegen, parser, transformers
 from latexify.config import Config
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class Style(enum.Enum):

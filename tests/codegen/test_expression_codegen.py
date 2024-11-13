@@ -8,7 +8,7 @@ import pytest
 from latexify import ast_utils, exceptions
 from latexify.codegen import expression_codegen
 
-from .. import utils
+from tests import utils
 
 
 def test_generic_visit() -> None:
@@ -177,9 +177,7 @@ def test_visit_setcomp(code: str, latex: str) -> None:
         ("f(x + y)", r"f \mathopen{}\left( x + y \mathclose{}\right)"),
         (
             "f(f(x))",
-            r"f \mathopen{}\left("
-            r" f \mathopen{}\left( x \mathclose{}\right)"
-            r" \mathclose{}\right)",
+            r"f \mathopen{}\left(" r" f \mathopen{}\left( x \mathclose{}\right)" r" \mathclose{}\right)",
         ),
         ("f(sqrt(x))", r"f \mathopen{}\left( \sqrt{ x } \mathclose{}\right)"),
         ("f(sin(x))", r"f \mathopen{}\left( \sin x \mathclose{}\right)"),
@@ -204,9 +202,7 @@ def test_visit_setcomp(code: str, latex: str) -> None:
         ("factorial(x + y)", r"\mathopen{}\left( x + y \mathclose{}\right) !"),
         (
             "factorial(f(x))",
-            r"\mathopen{}\left("
-            r" f \mathopen{}\left( x \mathclose{}\right)"
-            r" \mathclose{}\right) !",
+            r"\mathopen{}\left(" r" f \mathopen{}\left( x \mathclose{}\right)" r" \mathclose{}\right) !",
         ),
         ("factorial(sqrt(x))", r"\mathopen{}\left( \sqrt{ x } \mathclose{}\right) !"),
         ("factorial(sin(x))", r"\mathopen{}\left( \sin x \mathclose{}\right) !"),
@@ -226,9 +222,7 @@ def test_visit_call(code: str, latex: str) -> None:
         ("log(x**2)", r"\log \mathopen{}\left( x^{2} \mathclose{}\right)"),
         (
             "log(x**2)**3",
-            r"\mathopen{}\left("
-            r" \log \mathopen{}\left( x^{2} \mathclose{}\right)"
-            r" \mathclose{}\right)^{3}",
+            r"\mathopen{}\left(" r" \log \mathopen{}\left( x^{2} \mathclose{}\right)" r" \mathclose{}\right)^{3}",
         ),
     ],
 )
@@ -258,18 +252,15 @@ def test_visit_call_with_pow(code: str, latex: str) -> None:
         ("(i for i in x)", r"_{i \in x}^{} \mathopen{}\left({i}\mathclose{}\right)"),
         (
             "(i for i in [1, 2])",
-            r"_{i \in \mathopen{}\left[ 1, 2 \mathclose{}\right]}^{} "
-            r"\mathopen{}\left({i}\mathclose{}\right)",
+            r"_{i \in \mathopen{}\left[ 1, 2 \mathclose{}\right]}^{} " r"\mathopen{}\left({i}\mathclose{}\right)",
         ),
         (
             "(i for i in {1, 2})",
-            r"_{i \in \mathopen{}\left\{ 1, 2 \mathclose{}\right\}}^{}"
-            r" \mathopen{}\left({i}\mathclose{}\right)",
+            r"_{i \in \mathopen{}\left\{ 1, 2 \mathclose{}\right\}}^{}" r" \mathopen{}\left({i}\mathclose{}\right)",
         ),
         (
             "(i for i in f(x))",
-            r"_{i \in f \mathopen{}\left( x \mathclose{}\right)}^{}"
-            r" \mathopen{}\left({i}\mathclose{}\right)",
+            r"_{i \in f \mathopen{}\left( x \mathclose{}\right)}^{}" r" \mathopen{}\left({i}\mathclose{}\right)",
         ),
         (
             "(i for i in range(n))",
@@ -352,9 +343,7 @@ def test_visit_call_sum_prod(src_suffix: str, dest_suffix: str) -> None:
     for src_fn, dest_fn in [("fsum", r"\sum"), ("sum", r"\sum"), ("prod", r"\prod")]:
         node = ast_utils.parse_expr(src_fn + src_suffix)
         assert isinstance(node, ast.Call)
-        assert (
-            expression_codegen.ExpressionCodegen().visit(node) == dest_fn + dest_suffix
-        )
+        assert expression_codegen.ExpressionCodegen().visit(node) == dest_fn + dest_suffix
 
 
 @pytest.mark.parametrize(
@@ -363,33 +352,20 @@ def test_visit_call_sum_prod(src_suffix: str, dest_suffix: str) -> None:
         # 2 clauses
         (
             "sum(i for y in x for i in y)",
-            r"\sum_{y \in x}^{} \sum_{i \in y}^{} "
-            r"\mathopen{}\left({i}\mathclose{}\right)",
+            r"\sum_{y \in x}^{} \sum_{i \in y}^{} " r"\mathopen{}\left({i}\mathclose{}\right)",
         ),
         (
             "sum(i for y in x for z in y for i in z)",
-            r"\sum_{y \in x}^{} \sum_{z \in y}^{} \sum_{i \in z}^{} "
-            r"\mathopen{}\left({i}\mathclose{}\right)",
+            r"\sum_{y \in x}^{} \sum_{z \in y}^{} \sum_{i \in z}^{} " r"\mathopen{}\left({i}\mathclose{}\right)",
         ),
         # 3 clauses
         (
             "prod(i for y in x for i in y)",
-            r"\prod_{y \in x}^{} \prod_{i \in y}^{} "
-            r"\mathopen{}\left({i}\mathclose{}\right)",
+            r"\prod_{y \in x}^{} \prod_{i \in y}^{} " r"\mathopen{}\left({i}\mathclose{}\right)",
         ),
         (
             "prod(i for y in x for z in y for i in z)",
-            r"\prod_{y \in x}^{} \prod_{z \in y}^{} \prod_{i \in z}^{} "
-            r"\mathopen{}\left({i}\mathclose{}\right)",
-        ),
-        # reduce stop parameter
-        (
-            "sum(i for i in range(n+1))",
-            r"\sum_{i = 0}^{n} \mathopen{}\left({i}\mathclose{}\right)",
-        ),
-        (
-            "prod(i for i in range(n-1))",
-            r"\prod_{i = 0}^{n - 2} \mathopen{}\left({i}\mathclose{}\right)",
+            r"\prod_{y \in x}^{} \prod_{z \in y}^{} \prod_{i \in z}^{} " r"\mathopen{}\left({i}\mathclose{}\right)",
         ),
         # reduce stop parameter
         (
@@ -431,9 +407,7 @@ def test_visit_call_sum_prod_with_if(src_suffix: str, dest_suffix: str) -> None:
     for src_fn, dest_fn in [("sum", r"\sum"), ("prod", r"\prod")]:
         node = ast_utils.parse_expr(src_fn + src_suffix)
         assert isinstance(node, ast.Call)
-        assert (
-            expression_codegen.ExpressionCodegen().visit(node) == dest_fn + dest_suffix
-        )
+        assert expression_codegen.ExpressionCodegen().visit(node) == dest_fn + dest_suffix
 
 
 @pytest.mark.parametrize(
@@ -607,9 +581,7 @@ def test_if_then_else(code: str, latex: str) -> None:
         ("x**f(y)", r"x^{f \mathopen{}\left( y \mathclose{}\right)}"),
         (
             "f(x)**y",
-            r"\mathopen{}\left("
-            r" f \mathopen{}\left( x \mathclose{}\right)"
-            r" \mathclose{}\right)^{y}",
+            r"\mathopen{}\left(" r" f \mathopen{}\left( x \mathclose{}\right)" r" \mathclose{}\right)^{y}",
         ),
         ("x * f(y)", r"x \cdot f \mathopen{}\left( y \mathclose{}\right)"),
         ("f(x) * y", r"f \mathopen{}\left( x \mathclose{}\right) \cdot y"),
@@ -871,9 +843,7 @@ def test_visit_subscript(code: str, latex: str) -> None:
 def test_visit_binop_use_set_symbols(code: str, latex: str) -> None:
     tree = ast_utils.parse_expr(code)
     assert isinstance(tree, ast.BinOp)
-    assert (
-        expression_codegen.ExpressionCodegen(use_set_symbols=True).visit(tree) == latex
-    )
+    assert expression_codegen.ExpressionCodegen(use_set_symbols=True).visit(tree) == latex
 
 
 @pytest.mark.parametrize(
@@ -888,9 +858,7 @@ def test_visit_binop_use_set_symbols(code: str, latex: str) -> None:
 def test_visit_compare_use_set_symbols(code: str, latex: str) -> None:
     tree = ast_utils.parse_expr(code)
     assert isinstance(tree, ast.Compare)
-    assert (
-        expression_codegen.ExpressionCodegen(use_set_symbols=True).visit(tree) == latex
-    )
+    assert expression_codegen.ExpressionCodegen(use_set_symbols=True).visit(tree) == latex
 
 
 @pytest.mark.parametrize(
@@ -899,9 +867,7 @@ def test_visit_compare_use_set_symbols(code: str, latex: str) -> None:
         ("array(1)", r"\mathrm{array} \mathopen{}\left( 1 \mathclose{}\right)"),
         (
             "array([])",
-            r"\mathrm{array} \mathopen{}\left("
-            r" \mathopen{}\left[  \mathclose{}\right]"
-            r" \mathclose{}\right)",
+            r"\mathrm{array} \mathopen{}\left(" r" \mathopen{}\left[  \mathclose{}\right]" r" \mathclose{}\right)",
         ),
         ("array([1])", r"\begin{bmatrix} 1 \end{bmatrix}"),
         ("array([1, 2, 3])", r"\begin{bmatrix} 1 & 2 & 3 \end{bmatrix}"),
@@ -961,9 +927,7 @@ def test_numpy_array(code: str, latex: str) -> None:
         ("zeros(0, x)", r"\mathrm{zeros} \mathopen{}\left( 0, x \mathclose{}\right)"),
         (
             "zeros((x,))",
-            r"\mathrm{zeros} \mathopen{}\left("
-            r" \mathopen{}\left( x \mathclose{}\right)"
-            r" \mathclose{}\right)",
+            r"\mathrm{zeros} \mathopen{}\left(" r" \mathopen{}\left( x \mathclose{}\right)" r" \mathclose{}\right)",
         ),
     ],
 )
@@ -1022,8 +986,7 @@ def test_transpose(code: str, latex: str) -> None:
         ("det(b)", r"\det \mathopen{}\left( \mathbf{b} \mathclose{}\right)"),
         (
             "det([[1, 2], [3, 4]])",
-            r"\det \mathopen{}\left( \begin{bmatrix} 1 & 2 \\"
-            r" 3 & 4 \end{bmatrix} \mathclose{}\right)",
+            r"\det \mathopen{}\left( \begin{bmatrix} 1 & 2 \\" r" 3 & 4 \end{bmatrix} \mathclose{}\right)",
         ),
         (
             "det([[1, 2, 3], [4, 5, 6], [7, 8, 9]])",
@@ -1035,8 +998,7 @@ def test_transpose(code: str, latex: str) -> None:
         ("det(2)", r"\mathrm{det} \mathopen{}\left( 2 \mathclose{}\right)"),
         (
             "det(a, (1, 0))",
-            r"\mathrm{det} \mathopen{}\left( a, "
-            r"\mathopen{}\left( 1, 0 \mathclose{}\right) \mathclose{}\right)",
+            r"\mathrm{det} \mathopen{}\left( a, " r"\mathopen{}\left( 1, 0 \mathclose{}\right) \mathclose{}\right)",
         ),
     ],
 )
@@ -1059,8 +1021,7 @@ def test_determinant(code: str, latex: str) -> None:
         ),
         (
             "matrix_rank([[1, 2], [3, 4]])",
-            r"\mathrm{rank} \mathopen{}\left( \begin{bmatrix} 1 & 2 \\"
-            r" 3 & 4 \end{bmatrix} \mathclose{}\right)",
+            r"\mathrm{rank} \mathopen{}\left( \begin{bmatrix} 1 & 2 \\" r" 3 & 4 \end{bmatrix} \mathclose{}\right)",
         ),
         (
             "matrix_rank([[1, 2, 3], [4, 5, 6], [7, 8, 9]])",
@@ -1139,8 +1100,7 @@ def test_matrix_power(code: str, latex: str) -> None:
         ("inv(2)", r"\mathrm{inv} \mathopen{}\left( 2 \mathclose{}\right)"),
         (
             "inv(a, (1, 0))",
-            r"\mathrm{inv} \mathopen{}\left( a, "
-            r"\mathopen{}\left( 1, 0 \mathclose{}\right) \mathclose{}\right)",
+            r"\mathrm{inv} \mathopen{}\left( a, " r"\mathopen{}\left( 1, 0 \mathclose{}\right) \mathclose{}\right)",
         ),
     ],
 )
@@ -1165,8 +1125,7 @@ def test_inv(code: str, latex: str) -> None:
         ("pinv(2)", r"\mathrm{pinv} \mathopen{}\left( 2 \mathclose{}\right)"),
         (
             "pinv(a, (1, 0))",
-            r"\mathrm{pinv} \mathopen{}\left( a, "
-            r"\mathopen{}\left( 1, 0 \mathclose{}\right) \mathclose{}\right)",
+            r"\mathrm{pinv} \mathopen{}\left( a, " r"\mathopen{}\left( 1, 0 \mathclose{}\right) \mathclose{}\right)",
         ),
     ],
 )
@@ -1228,14 +1187,12 @@ def test_pinv(code: str, latex: str) -> None:
         (
             "f(x)",
             "g(y)",
-            r"f \mathopen{}\left( x \mathclose{}\right)"
-            r" \cdot g \mathopen{}\left( y \mathclose{}\right)",
+            r"f \mathopen{}\left( x \mathclose{}\right)" r" \cdot g \mathopen{}\left( y \mathclose{}\right)",
         ),
         (
             "f(x)",
             "(u + v)",
-            r"f \mathopen{}\left( x \mathclose{}\right)"
-            r" \cdot \mathopen{}\left( u + v \mathclose{}\right)",
+            r"f \mathopen{}\left( x \mathclose{}\right)" r" \cdot \mathopen{}\left( u + v \mathclose{}\right)",
         ),
         ("(s + t)", "3", r"\mathopen{}\left( s + t \mathclose{}\right) \cdot 3"),
         ("(s + t)", "y", r"\mathopen{}\left( s + t \mathclose{}\right) y"),
@@ -1248,14 +1205,12 @@ def test_pinv(code: str, latex: str) -> None:
         (
             "(s + t)",
             "g(y)",
-            r"\mathopen{}\left( s + t \mathclose{}\right)"
-            r" g \mathopen{}\left( y \mathclose{}\right)",
+            r"\mathopen{}\left( s + t \mathclose{}\right)" r" g \mathopen{}\left( y \mathclose{}\right)",
         ),
         (
             "(s + t)",
             "(u + v)",
-            r"\mathopen{}\left( s + t \mathclose{}\right)"
-            r" \mathopen{}\left( u + v \mathclose{}\right)",
+            r"\mathopen{}\left( s + t \mathclose{}\right)" r" \mathopen{}\left( u + v \mathclose{}\right)",
         ),
     ],
 )
@@ -1263,7 +1218,4 @@ def test_remove_multiply(left: str, right: str, latex: str) -> None:
     for op in ["*", "@"]:
         tree = ast_utils.parse_expr(f"{left} {op} {right}")
         assert isinstance(tree, ast.BinOp)
-        assert (
-            expression_codegen.ExpressionCodegen(use_math_symbols=True).visit(tree)
-            == latex
-        )
+        assert expression_codegen.ExpressionCodegen(use_math_symbols=True).visit(tree) == latex

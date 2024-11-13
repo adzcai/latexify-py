@@ -9,7 +9,7 @@ import pytest
 from latexify import exceptions
 from latexify.codegen import function_codegen
 
-from .. import utils
+from tests import utils
 
 
 @utils.require_at_least(10)
@@ -50,10 +50,7 @@ def test_matchvalue() -> None:
         )
     ).body[0]
     expected = (
-        r"\left\{ \begin{array}{ll}"
-        r" 1, & \mathrm{if} \ x = 0 \\"
-        r" 2, & \mathrm{otherwise}"
-        r" \end{array} \right."
+        r"\left\{ \begin{array}{ll}" r" 1, & \mathrm{if} \ x = 0 \\" r" 2, & \mathrm{otherwise}" r" \end{array} \right."
     )
     assert function_codegen.FunctionCodegen().visit(tree) == expected
 

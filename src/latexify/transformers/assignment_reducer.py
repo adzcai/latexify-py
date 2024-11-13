@@ -28,8 +28,7 @@ class AssignmentReducer(ast.NodeTransformer):
 
     _assignments: dict[str, ast.expr] | None = None
 
-    # TODO(odashi):
-    # Currently, this function does not care much about some expressions, e.g.,
+    # TODO(odashi): Currently, this function does not care much about some expressions, e.g.,
     # comprehensions or lambdas, which introduces inner scopes.
     # It may cause some mistakes in the resulting AST.
     def visit_FunctionDef(self, node: ast.FunctionDef) -> Any:
@@ -41,8 +40,7 @@ class AssignmentReducer(ast.NodeTransformer):
         for child in node.body[:-1]:
             if not isinstance(child, ast.Assign):
                 raise exceptions.LatexifyNotSupportedError(
-                    "AssignmentReducer supports only Assign nodes, "
-                    f"but got: {type(child).__name__}"
+                    "AssignmentReducer supports only Assign nodes, " f"but got: {type(child).__name__}"
                 )
 
             value = self.visit(child.value)
@@ -50,17 +48,14 @@ class AssignmentReducer(ast.NodeTransformer):
             for target in child.targets:
                 if not isinstance(target, ast.Name):
                     raise exceptions.LatexifyNotSupportedError(
-                        "AssignmentReducer does not recognize list/tuple "
-                        "decomposition."
+                        "AssignmentReducer does not recognize list/tuple " "decomposition."
                     )
                 self._assignments[target.id] = value
 
         return_original = node.body[-1]
 
         if not isinstance(return_original, (ast.Return, ast.If)):
-            raise exceptions.LatexifySyntaxError(
-                f"Unsupported last statement: {type(return_original).__name__}"
-            )
+            raise exceptions.LatexifySyntaxError(f"Unsupported last statement: {type(return_original).__name__}")
 
         return_transformed = self.visit(return_original)
 

@@ -4,17 +4,14 @@ from __future__ import annotations
 
 import math
 
-from .utils import check_function
+from tests.integration.utils import check_function
 
 
 def test_atan2() -> None:
     def solve(x, y):
         return math.atan2(y, x)
 
-    latex = (
-        r"\mathrm{solve}(x, y) ="
-        r" \arctan \mathopen{}\left( \frac{y}{x} \mathclose{}\right)"
-    )
+    latex = r"\mathrm{solve}(x, y) =" r" \arctan \mathopen{}\left( \frac{y}{x} \mathclose{}\right)"
     check_function(solve, latex, expand_functions={"atan2"})
 
 
@@ -22,10 +19,7 @@ def test_atan2_nested() -> None:
     def solve(x, y):
         return math.atan2(math.exp(y), math.exp(x))
 
-    latex = (
-        r"\mathrm{solve}(x, y) ="
-        r" \arctan \mathopen{}\left( \frac{e^{y}}{e^{x}} \mathclose{}\right)"
-    )
+    latex = r"\mathrm{solve}(x, y) =" r" \arctan \mathopen{}\left( \frac{e^{y}}{e^{x}} \mathclose{}\right)"
     check_function(solve, latex, expand_functions={"atan2", "exp"})
 
 
@@ -74,9 +68,7 @@ def test_expm1_nested() -> None:
         return math.expm1(math.pow(y, z))
 
     latex = r"\mathrm{solve}(x, y, z) = e^{y^{z}} - 1"
-    check_function(
-        solve, latex, expand_functions={"expm1", "exp", "pow"}
-    )
+    check_function(solve, latex, expand_functions={"expm1", "exp", "pow"})
 
 
 def test_hypot_without_attribute() -> None:
@@ -101,10 +93,7 @@ def test_hypot_nested() -> None:
     def solve(a, b, x, y):
         return math.hypot(math.hypot(a, b), x, y)
 
-    latex = (
-        r"\mathrm{solve}(a, b, x, y) ="
-        r" \sqrt{ \sqrt{ a^{2} + b^{2} }^{2} + x^{2} + y^{2} }"
-    )
+    latex = r"\mathrm{solve}(a, b, x, y) =" r" \sqrt{ \sqrt{ a^{2} + b^{2} }^{2} + x^{2} + y^{2} }"
     check_function(solve, latex, expand_functions={"hypot"})
 
 
@@ -128,10 +117,7 @@ def test_pow_nested() -> None:
     def solve(w, x, y, z):
         return math.pow(math.pow(w, x), math.pow(y, z))
 
-    latex = (
-        r"\mathrm{solve}(w, x, y, z) = "
-        r"\mathopen{}\left( w^{x} \mathclose{}\right)^{y^{z}}"
-    )
+    latex = r"\mathrm{solve}(w, x, y, z) = " r"\mathopen{}\left( w^{x} \mathclose{}\right)^{y^{z}}"
     check_function(solve, latex, expand_functions={"pow"})
 
 

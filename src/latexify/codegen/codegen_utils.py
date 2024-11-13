@@ -23,6 +23,4 @@ def convert_constant(value: Any) -> str:
         return r"\textrm{" + str(value) + "}"
     if value is ...:
         return r"\cdots"
-    raise exceptions.LatexifyNotSupportedError(
-        f"Unrecognized constant: {type(value).__name__}"
-    )
+    raise exceptions.LatexifyNotSupportedError(f"Unrecognized constant: {type(value).__name__}")

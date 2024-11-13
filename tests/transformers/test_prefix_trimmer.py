@@ -8,7 +8,7 @@ import pytest
 from latexify import ast_utils
 from latexify.transformers import prefix_trimmer
 
-from .. import utils
+from tests import utils
 
 if TYPE_CHECKING:
     import ast
@@ -19,9 +19,7 @@ make_attr = ast_utils.make_attribute
 PrefixTrimmer = prefix_trimmer.PrefixTrimmer
 
 
-@pytest.mark.parametrize(
-    "prefix", [".x", "x.", "1", "1x", "x.1", "x.1x", "x.x.1", "x.x.1x" "x..x", "x.x..x"]
-)
+@pytest.mark.parametrize("prefix", [".x", "x.", "1", "1x", "x.1", "x.1x", "x.x.1", "x.x.1x" "x..x", "x.x..x"])
 def test_invalid_prefix(prefix: str) -> None:
     with pytest.raises(ValueError, match=rf"^Invalid prefix: {prefix}$"):
         PrefixTrimmer({prefix})
