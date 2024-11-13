@@ -5,9 +5,10 @@ from __future__ import annotations
 import ast
 
 import pytest
-from latexify import exceptions, parser
+from latexify.ast_utils import parse_function
+from latexify.exceptions import LatexifySyntaxError
 
-from tests import utils
+from tests.utils import assert_ast_equal
 
 
 def test_parse_function_with_posonlyargs() -> None:
@@ -26,13 +27,13 @@ def test_parse_function_with_posonlyargs() -> None:
         ],
     )
 
-    obtained = parser.parse_function(f)
-    utils.assert_ast_equal(obtained, expected)
+    obtained = parse_function(f)
+    assert_ast_equal(obtained, expected)
 
 
 def test_parse_function_with_lambda() -> None:
-    with pytest.raises(exceptions.LatexifySyntaxError, match=r"^Not a function\.$"):
-        parser.parse_function(lambda: ())
+    with pytest.raises(LatexifySyntaxError, match=r"^Not a function\.$"):
+        parse_function(lambda: ())
     x = lambda: ()  # noqa: E731
-    with pytest.raises(exceptions.LatexifySyntaxError, match=r"^Not a function\.$"):
-        parser.parse_function(x)
+    with pytest.raises(LatexifySyntaxError, match=r"^Not a function\.$"):
+        parse_function(x)

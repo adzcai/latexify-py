@@ -2,10 +2,10 @@
 
 import ast
 
-from latexify import ast_utils, parser
+from latexify.ast_utils import make_constant, parse_function
 from latexify.transformers.docstring_remover import DocstringRemover
 
-from tests import utils
+from tests.utils import assert_ast_equal
 
 
 def test_remove_docstrings() -> None:
@@ -16,7 +16,7 @@ def test_remove_docstrings() -> None:
         """This string constant should also be removed."""
         return x
 
-    tree = parser.parse_function(f).body[0]
+    tree = parse_function(f).body[0]
     assert isinstance(tree, ast.FunctionDef)
 
     expected = ast.FunctionDef(
@@ -24,11 +24,11 @@ def test_remove_docstrings() -> None:
         body=[
             ast.Assign(
                 targets=[ast.Name(id="x", ctx=ast.Store())],
-                value=ast_utils.make_constant(42),
+                value=make_constant(42),
             ),
             ast.Expr(value=ast.Call(func=ast.Name(id="f", ctx=ast.Load()))),
             ast.Return(value=ast.Name(id="x", ctx=ast.Load())),
         ],
     )
     transformed = DocstringRemover().visit(tree)
-    utils.assert_ast_equal(transformed, expected)
+    assert_ast_equal(transformed, expected)

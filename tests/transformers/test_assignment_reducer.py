@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import ast
 
-from latexify import ast_utils, parser
+from latexify import ast_utils
 from latexify.transformers.assignment_reducer import AssignmentReducer
 
-from tests import utils
+from tests.utils import assert_ast_equal
 
 
 def _make_ast(body: list[ast.stmt]) -> ast.Module:
@@ -45,8 +45,8 @@ def test_unchanged() -> None:
             ast.Return(value=ast.Name(id="x", ctx=ast.Load())),
         ]
     )
-    transformed = AssignmentReducer().visit(parser.parse_function(f))
-    utils.assert_ast_equal(transformed, expected)
+    transformed = AssignmentReducer().visit(ast_utils.parse_function(f))
+    assert_ast_equal(transformed, expected)
 
 
 def test_constant() -> None:
@@ -59,8 +59,8 @@ def test_constant() -> None:
             ast.Return(value=ast_utils.make_constant(0)),
         ]
     )
-    transformed = AssignmentReducer().visit(parser.parse_function(f))
-    utils.assert_ast_equal(transformed, expected)
+    transformed = AssignmentReducer().visit(ast_utils.parse_function(f))
+    assert_ast_equal(transformed, expected)
 
 
 def test_nested() -> None:
@@ -79,8 +79,8 @@ def test_nested() -> None:
             )
         ]
     )
-    transformed = AssignmentReducer().visit(parser.parse_function(f))
-    utils.assert_ast_equal(transformed, expected)
+    transformed = AssignmentReducer().visit(ast_utils.parse_function(f))
+    assert_ast_equal(transformed, expected)
 
 
 def test_nested2() -> None:
@@ -104,8 +104,8 @@ def test_nested2() -> None:
             )
         ]
     )
-    transformed = AssignmentReducer().visit(parser.parse_function(f))
-    utils.assert_ast_equal(transformed, expected)
+    transformed = AssignmentReducer().visit(ast_utils.parse_function(f))
+    assert_ast_equal(transformed, expected)
 
 
 def test_overwrite() -> None:
@@ -125,5 +125,5 @@ def test_overwrite() -> None:
             )
         ]
     )
-    transformed = AssignmentReducer().visit(parser.parse_function(f))
-    utils.assert_ast_equal(transformed, expected)
+    transformed = AssignmentReducer().visit(ast_utils.parse_function(f))
+    assert_ast_equal(transformed, expected)

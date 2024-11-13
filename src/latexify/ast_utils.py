@@ -3,8 +3,17 @@
 from __future__ import annotations
 
 import ast
+import inspect
 import sys
-from typing import Any
+import textwrap
+from typing import TYPE_CHECKING, Any
+
+import dill
+
+from latexify.exceptions import LatexifySyntaxError
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 def parse_expr(code: str) -> ast.expr:
@@ -17,6 +26,31 @@ def parse_expr(code: str) -> ast.expr:
         ast.expr corresponding to `code`.
     """
     return ast.parse(code, mode="eval").body
+
+
+def parse_function(fn: Callable[..., Any]) -> ast.Module:
+    """Parses given function.
+
+    Args:
+        fn: Target function.
+
+    Returns:
+        AST tree representing `fn`.
+    """
+    try:
+        source = inspect.getsource(fn)
+    except OSError:
+        # Maybe running on console.
+        source = dill.source.getsource(fn)
+
+    # Remove extra indentation so that ast.parse runs correctly.
+    source = textwrap.dedent(source)
+
+    tree = ast.parse(source, type_comments=True)
+    if not tree.body or not isinstance(tree.body[0], ast.FunctionDef):
+        raise LatexifySyntaxError("Not a function.")
+
+    return tree
 
 
 def make_name(id_: str) -> ast.Name:
