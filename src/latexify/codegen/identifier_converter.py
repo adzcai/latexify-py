@@ -6,7 +6,7 @@ from latexify.codegen import expression_rules
 
 
 class IdentifierConverter:
-    r"""Converts Python identifiers to appropriate LaTeX expression.
+    r"""Converts Python identifiers (e.g. variable names) to appropriate LaTeX expression.
 
     This converter applies following rules:
         - `foo` --> `\foo`, if `use_math_symbols == True` and the given identifier

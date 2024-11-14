@@ -21,7 +21,7 @@ def my_function(my_argument):
 my_function
 ```
 
-$$f(x) = \mathrm{g}\left(x\right)$$
+$$f(x) = \mathrm{g}\mathopen{}\left(x\mathclose{}\right)$$
 
 
 ## `reduce_assignments: bool`
@@ -57,7 +57,7 @@ def greek(alpha, beta, gamma, Omega):
 greek
 ```
 
-$$\mathrm{greek}({\alpha}, {\beta}, {\gamma}, {\Omega}) = {\alpha} {\beta} + \Gamma\left({{\gamma}}\right) + {\Omega}$$
+$$\mathrm{greek}({\alpha}, {\beta}, {\gamma}, {\Omega}) = {\alpha} {\beta} + \Gamma\mathopen{}\left({{\gamma}}\mathclose{}\right) + {\Omega}$$
 
 
 ## `use_set_symbols: bool`
@@ -72,7 +72,7 @@ def f(x, y):
 f
 ```
 
-$$f(x, y) = \left( x \cap y\space,\space x \cup y\space,\space x \setminus y\space,\space x \mathbin{\triangle} y\space,\space {x \subset y}\space,\space {x \subseteq y}\space,\space {x \supset y}\space,\space {x \supseteq y}\right)$$
+$$f(x, y) = \mathopen{}\left( x \cap y\space,\space x \cup y\space,\space x \setminus y\space,\space x \mathbin{\triangle} y\space,\space {x \subset y}\space,\space {x \subseteq y}\space,\space {x \supset y}\space,\space {x \supseteq y}\mathclose{}\right)$$
 
 
 ## `use_signature: bool`

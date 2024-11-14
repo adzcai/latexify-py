@@ -7,7 +7,8 @@ import contextlib
 from typing import TYPE_CHECKING
 
 from latexify import exceptions
-from latexify.codegen import expression_codegen, identifier_converter
+from latexify.codegen.expression_codegen import ExpressionCodegen
+from latexify.codegen.identifier_converter import IdentifierConverter
 
 if TYPE_CHECKING:
     from collections.abc import Generator
@@ -16,13 +17,14 @@ if TYPE_CHECKING:
 class AlgorithmicCodegen(ast.NodeVisitor):
     """Codegen for single algorithms.
 
-    This codegen works for Module with single FunctionDef node to generate a single
-    LaTeX expression of the given algorithm.
+    This subclasses the ast.NodeVisitor
+    to take in an AST rooted at a single FunctionDef node
+    and generate LaTeX `algpseudocode` code for the algorithm.
     """
 
-    _SPACES_PER_INDENT = 4
+    SPACES_PER_INDENT = 4
 
-    _identifier_converter: identifier_converter.IdentifierConverter
+    _identifier_converter: IdentifierConverter
     _indent_level: int
 
     def __init__(self, *, use_math_symbols: bool = False, use_set_symbols: bool = False) -> None:
@@ -33,10 +35,8 @@ class AlgorithmicCodegen(ast.NodeVisitor):
                 (e.g., "alpha") to the LaTeX symbol (e.g., "\\alpha").
             use_set_symbols: Whether to use set symbols or not.
         """
-        self._expression_codegen = expression_codegen.ExpressionCodegen(
-            use_math_symbols=use_math_symbols, use_set_symbols=use_set_symbols
-        )
-        self._identifier_converter = identifier_converter.IdentifierConverter(
+        self._expression_codegen = ExpressionCodegen(use_math_symbols=use_math_symbols, use_set_symbols=use_set_symbols)
+        self._identifier_converter = IdentifierConverter(
             use_math_symbols=use_math_symbols,
             use_mathrm=False,
         )
@@ -156,7 +156,7 @@ class AlgorithmicCodegen(ast.NodeVisitor):
         Args:
             line: The line to add an indent to.
         """
-        return self._indent_level * self._SPACES_PER_INDENT * " " + line
+        return self._indent_level * self.SPACES_PER_INDENT * " " + line
 
 
 class IPythonAlgorithmicCodegen(ast.NodeVisitor):
@@ -171,7 +171,7 @@ class IPythonAlgorithmicCodegen(ast.NodeVisitor):
     _EM_PER_INDENT = 1
     _LINE_BREAK = r" \\ "
 
-    _identifier_converter: identifier_converter.IdentifierConverter
+    _identifier_converter: IdentifierConverter
     _indent_level: int
 
     def __init__(self, *, use_math_symbols: bool = False, use_set_symbols: bool = False) -> None:
@@ -182,10 +182,8 @@ class IPythonAlgorithmicCodegen(ast.NodeVisitor):
                 (e.g., "alpha") to the LaTeX symbol (e.g., "\\alpha").
             use_set_symbols: Whether to use set symbols or not.
         """
-        self._expression_codegen = expression_codegen.ExpressionCodegen(
-            use_math_symbols=use_math_symbols, use_set_symbols=use_set_symbols
-        )
-        self._identifier_converter = identifier_converter.IdentifierConverter(use_math_symbols=use_math_symbols)
+        self._expression_codegen = ExpressionCodegen(use_math_symbols=use_math_symbols, use_set_symbols=use_set_symbols)
+        self._identifier_converter = IdentifierConverter(use_math_symbols=use_math_symbols)
         self._indent_level = 0
 
     def generic_visit(self, node: ast.AST) -> str:
