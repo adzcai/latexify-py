@@ -1,4 +1,4 @@
-"""Tests for latexify.codegen.algorithmic_codegen."""
+"""Tests for latexify.codegen."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ import textwrap
 
 import pytest
 from latexify import exceptions
-from latexify.codegen import algorithmic_codegen
+from latexify.codegen.algorithmic_codegen import AlgorithmicCodegen, IPythonAlgorithmicCodegen
 
 
 def test_generic_visit() -> None:
@@ -18,11 +18,11 @@ def test_generic_visit() -> None:
         exceptions.LatexifyNotSupportedError,
         match=r"^Unsupported AST: UnknownNode$",
     ):
-        algorithmic_codegen.AlgorithmicCodegen().visit(UnknownNode())
+        AlgorithmicCodegen().visit(UnknownNode())
 
 
 @pytest.mark.parametrize(
-    "code,latex",
+    ("code", "latex"),
     [
         (
             "x = 3",
@@ -37,11 +37,11 @@ def test_generic_visit() -> None:
 def test_visit_assign(code: str, latex: str) -> None:
     node = ast.parse(textwrap.dedent(code)).body[0]
     assert isinstance(node, ast.Assign)
-    assert algorithmic_codegen.AlgorithmicCodegen().visit(node) == latex
+    assert AlgorithmicCodegen().visit(node) == latex
 
 
 @pytest.mark.parametrize(
-    "code,latex",
+    ("code", "latex"),
     [
         (
             "for i in {1}: x = i",
@@ -56,11 +56,11 @@ def test_visit_assign(code: str, latex: str) -> None:
 def test_visit_for(code: str, latex: str) -> None:
     node = ast.parse(textwrap.dedent(code)).body[0]
     assert isinstance(node, ast.For)
-    assert algorithmic_codegen.AlgorithmicCodegen().visit(node) == textwrap.dedent(latex).strip()
+    assert AlgorithmicCodegen().visit(node) == textwrap.dedent(latex).strip()
 
 
 @pytest.mark.parametrize(
-    "code,latex",
+    ("code", "latex"),
     [
         (
             "def f(x): return x",
@@ -87,11 +87,11 @@ def test_visit_for(code: str, latex: str) -> None:
 def test_visit_functiondef(code: str, latex: str) -> None:
     node = ast.parse(textwrap.dedent(code)).body[0]
     assert isinstance(node, ast.FunctionDef)
-    assert algorithmic_codegen.AlgorithmicCodegen().visit(node) == textwrap.dedent(latex).strip()
+    assert AlgorithmicCodegen().visit(node) == textwrap.dedent(latex).strip()
 
 
 @pytest.mark.parametrize(
-    "code,latex",
+    ("code", "latex"),
     [
         (
             "if x < y: return x",
@@ -116,11 +116,108 @@ def test_visit_functiondef(code: str, latex: str) -> None:
 def test_visit_if(code: str, latex: str) -> None:
     node = ast.parse(code).body[0]
     assert isinstance(node, ast.If)
-    assert algorithmic_codegen.AlgorithmicCodegen().visit(node) == textwrap.dedent(latex).strip()
+    assert AlgorithmicCodegen().visit(node) == textwrap.dedent(latex).strip()
 
 
 @pytest.mark.parametrize(
-    "code,latex",
+    ("code", "latex"),
+    [
+        # basic test
+        (
+            """
+            if x < y:
+                return x
+            elif x > y:
+                return y
+            """,
+            r"""
+            \If{$x < y$}
+                \State \Return $x$
+            \ElsIf{$x > y$}
+                \State \Return $y$
+            \EndIf
+            """,
+        ),
+        # multiple elifs
+        (
+            """
+            if x < 5:
+                return x
+            elif x < 10:
+                y = 0
+                return y
+            else:
+                z = 0
+                return z
+            """,
+            r"""
+            \If{$x < 5$}
+                \State \Return $x$
+            \ElsIf{$x < 10$}
+                \State $y \gets 0$
+                \State \Return $y$
+            \Else
+                \State $z \gets 0$
+                \State \Return $z$
+            \EndIf
+            """,
+        ),
+        # nested ifs should be detected as elifs
+        (
+            """
+            if x < 5:
+                return x
+            else:
+                if x < 10:
+                    return y
+                else:
+                    return z
+            """,
+            r"""
+            \If{$x < 5$}
+                \State \Return $x$
+            \ElsIf{$x < 10$}
+                \State \Return $y$
+            \Else
+                \State \Return $z$
+            \EndIf
+            """,
+        ),
+        # else with statements should not be collapsed
+        (
+            """
+            if x < 5:
+                return x
+            else:
+                y = 0
+                if x < 10:
+                    return y
+                else:
+                    return z
+            """,
+            r"""
+            \If{$x < 5$}
+                \State \Return $x$
+            \Else
+                \State $y \gets 0$
+                \If{$x < 10$}
+                    \State \Return $y$
+                \Else
+                    \State \Return $z$
+                \EndIf
+            \EndIf
+            """,
+        ),
+    ],
+)
+def test_visit_elif(code: str, latex: str) -> None:
+    node = ast.parse(textwrap.dedent(code)).body[0]
+    assert isinstance(node, ast.If)
+    assert AlgorithmicCodegen().visit(node) == textwrap.dedent(latex).strip()
+
+
+@pytest.mark.parametrize(
+    ("code", "latex"),
     [
         (
             "return x + y",
@@ -135,11 +232,11 @@ def test_visit_if(code: str, latex: str) -> None:
 def test_visit_return(code: str, latex: str) -> None:
     node = ast.parse(code).body[0]
     assert isinstance(node, ast.Return)
-    assert algorithmic_codegen.AlgorithmicCodegen().visit(node) == latex
+    assert AlgorithmicCodegen().visit(node) == latex
 
 
 @pytest.mark.parametrize(
-    "code,latex",
+    ("code", "latex"),
     [
         (
             "while x < y: x = x + 1",
@@ -154,7 +251,7 @@ def test_visit_return(code: str, latex: str) -> None:
 def test_visit_while(code: str, latex: str) -> None:
     node = ast.parse(code).body[0]
     assert isinstance(node, ast.While)
-    assert algorithmic_codegen.AlgorithmicCodegen().visit(node) == textwrap.dedent(latex).strip()
+    assert AlgorithmicCodegen().visit(node) == textwrap.dedent(latex).strip()
 
 
 def test_visit_while_with_else() -> None:
@@ -173,29 +270,29 @@ def test_visit_while_with_else() -> None:
         exceptions.LatexifyNotSupportedError,
         match="^While statement with the else clause is not supported$",
     ):
-        algorithmic_codegen.AlgorithmicCodegen().visit(node)
+        AlgorithmicCodegen().visit(node)
 
 
 def test_visit_pass() -> None:
     node = ast.parse("pass").body[0]
     assert isinstance(node, ast.Pass)
-    assert algorithmic_codegen.AlgorithmicCodegen().visit(node) == r"\State $\mathbf{pass}$"
+    assert AlgorithmicCodegen().visit(node) == r"\State $\mathbf{pass}$"
 
 
 def test_visit_break() -> None:
     node = ast.parse("break").body[0]
     assert isinstance(node, ast.Break)
-    assert algorithmic_codegen.AlgorithmicCodegen().visit(node) == r"\State $\mathbf{break}$"
+    assert AlgorithmicCodegen().visit(node) == r"\State $\mathbf{break}$"
 
 
 def test_visit_continue() -> None:
     node = ast.parse("continue").body[0]
     assert isinstance(node, ast.Continue)
-    assert algorithmic_codegen.AlgorithmicCodegen().visit(node) == r"\State $\mathbf{continue}$"
+    assert AlgorithmicCodegen().visit(node) == r"\State $\mathbf{continue}$"
 
 
 @pytest.mark.parametrize(
-    "code,latex",
+    ("code", "latex"),
     [
         ("x = 3", r"x \gets 3"),
         ("a = b = 0", r"a \gets b \gets 0"),
@@ -204,11 +301,11 @@ def test_visit_continue() -> None:
 def test_visit_assign_ipython(code: str, latex: str) -> None:
     node = ast.parse(textwrap.dedent(code)).body[0]
     assert isinstance(node, ast.Assign)
-    assert algorithmic_codegen.IPythonAlgorithmicCodegen().visit(node) == latex
+    assert IPythonAlgorithmicCodegen().visit(node) == latex
 
 
 @pytest.mark.parametrize(
-    "code,latex",
+    ("code", "latex"),
     [
         (
             "for i in {1}: x = i",
@@ -224,11 +321,11 @@ def test_visit_assign_ipython(code: str, latex: str) -> None:
 def test_visit_for_ipython(code: str, latex: str) -> None:
     node = ast.parse(textwrap.dedent(code)).body[0]
     assert isinstance(node, ast.For)
-    assert algorithmic_codegen.IPythonAlgorithmicCodegen().visit(node) == textwrap.dedent(latex).strip()
+    assert IPythonAlgorithmicCodegen().visit(node) == textwrap.dedent(latex).strip()
 
 
 @pytest.mark.parametrize(
-    "code,latex",
+    ("code", "latex"),
     [
         (
             "def f(x): return x",
@@ -257,11 +354,11 @@ def test_visit_for_ipython(code: str, latex: str) -> None:
 def test_visit_functiondef_ipython(code: str, latex: str) -> None:
     node = ast.parse(textwrap.dedent(code)).body[0]
     assert isinstance(node, ast.FunctionDef)
-    assert algorithmic_codegen.IPythonAlgorithmicCodegen().visit(node) == latex
+    assert IPythonAlgorithmicCodegen().visit(node) == latex
 
 
 @pytest.mark.parametrize(
-    "code,latex",
+    ("code", "latex"),
     [
         (
             "if x < y: return x",
@@ -282,11 +379,11 @@ def test_visit_functiondef_ipython(code: str, latex: str) -> None:
 def test_visit_if_ipython(code: str, latex: str) -> None:
     node = ast.parse(textwrap.dedent(code)).body[0]
     assert isinstance(node, ast.If)
-    assert algorithmic_codegen.IPythonAlgorithmicCodegen().visit(node) == latex
+    assert IPythonAlgorithmicCodegen().visit(node) == latex
 
 
 @pytest.mark.parametrize(
-    "code,latex",
+    ("code", "latex"),
     [
         (
             "return x + y",
@@ -301,11 +398,11 @@ def test_visit_if_ipython(code: str, latex: str) -> None:
 def test_visit_return_ipython(code: str, latex: str) -> None:
     node = ast.parse(textwrap.dedent(code)).body[0]
     assert isinstance(node, ast.Return)
-    assert algorithmic_codegen.IPythonAlgorithmicCodegen().visit(node) == latex
+    assert IPythonAlgorithmicCodegen().visit(node) == latex
 
 
 @pytest.mark.parametrize(
-    "code,latex",
+    ("code", "latex"),
     [
         (
             "while x < y: x = x + 1",
@@ -316,7 +413,7 @@ def test_visit_return_ipython(code: str, latex: str) -> None:
 def test_visit_while_ipython(code: str, latex: str) -> None:
     node = ast.parse(textwrap.dedent(code)).body[0]
     assert isinstance(node, ast.While)
-    assert algorithmic_codegen.IPythonAlgorithmicCodegen().visit(node) == latex
+    assert IPythonAlgorithmicCodegen().visit(node) == latex
 
 
 def test_visit_while_with_else_ipython() -> None:
@@ -335,22 +432,22 @@ def test_visit_while_with_else_ipython() -> None:
         exceptions.LatexifyNotSupportedError,
         match="^While statement with the else clause is not supported$",
     ):
-        algorithmic_codegen.IPythonAlgorithmicCodegen().visit(node)
+        IPythonAlgorithmicCodegen().visit(node)
 
 
 def test_visit_pass_ipython() -> None:
     node = ast.parse("pass").body[0]
     assert isinstance(node, ast.Pass)
-    assert algorithmic_codegen.IPythonAlgorithmicCodegen().visit(node) == r"\mathbf{pass}"
+    assert IPythonAlgorithmicCodegen().visit(node) == r"\mathbf{pass}"
 
 
 def test_visit_break_ipython() -> None:
     node = ast.parse("break").body[0]
     assert isinstance(node, ast.Break)
-    assert algorithmic_codegen.IPythonAlgorithmicCodegen().visit(node) == r"\mathbf{break}"
+    assert IPythonAlgorithmicCodegen().visit(node) == r"\mathbf{break}"
 
 
 def test_visit_continue_ipython() -> None:
     node = ast.parse("continue").body[0]
     assert isinstance(node, ast.Continue)
-    assert algorithmic_codegen.IPythonAlgorithmicCodegen().visit(node) == r"\mathbf{continue}"
+    assert IPythonAlgorithmicCodegen().visit(node) == r"\mathbf{continue}"

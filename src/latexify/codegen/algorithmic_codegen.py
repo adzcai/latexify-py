@@ -96,18 +96,31 @@ class AlgorithmicCodegen(ast.NodeVisitor):
     # TODO(ZibingZhang): support \ELSIF
     def visit_If(self, node: ast.If) -> str:
         """Visit an If node."""
-        cond_latex = self._expression_codegen.visit(node.test)
-        with self._increment_level():
-            body_latex = "\n".join(self.visit(stmt) for stmt in node.body)
 
-        latex = self._add_indent(f"\\If{{${cond_latex}$}}\n" + body_latex)
+        branches = [node]
+        while len(node.orelse) == 1 and isinstance(node.orelse[0], ast.If):
+            branches.append(node := node.orelse[0])
 
-        if node.orelse:
-            latex += "\n" + self._add_indent("\\Else\n")
+        branches_latex = []
+        # if and elif statements
+        for i, branch in enumerate(branches):
+            # test
+            cond_latex = self._expression_codegen.visit(branch.test)
+            command = r"\If" if i == 0 else r"\ElsIf"
+            branches_latex.append(self._add_indent(f"{command}{{${cond_latex}$}}"))
+
+            # body
             with self._increment_level():
-                latex += "\n".join(self.visit(stmt) for stmt in node.orelse)
+                branches_latex.extend(self.visit(stmt) for stmt in branch.body)
 
-        return f"{latex}\n" + self._add_indent(r"\EndIf")
+        # else
+        if node.orelse:
+            branches_latex.append(self._add_indent(r"\Else"))
+            with self._increment_level():
+                branches_latex.extend(self.visit(stmt) for stmt in node.orelse)
+
+        branches_latex.append(self._add_indent(r"\EndIf"))
+        return "\n".join(branches_latex)
 
     def visit_Module(self, node: ast.Module) -> str:
         """Visit a Module node."""
