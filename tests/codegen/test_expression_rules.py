@@ -11,7 +11,7 @@ from latexify.codegen import expression_rules
 
 
 @pytest.mark.parametrize(
-    "node,precedence",
+    ("node", "precedence"),
     [
         (ast.Call(), expression_rules._CALL_PRECEDENCE),
         (ast.BinOp(op=ast.Add()), expression_rules._PRECEDENCES[ast.Add]),

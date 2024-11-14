@@ -23,7 +23,7 @@ def test_generic_visit() -> None:
 
 
 @pytest.mark.parametrize(
-    "code,latex",
+    ("code", "latex"),
     [
         ("()", r"\mathopen{}\left(  \mathclose{}\right)"),
         ("(x,)", r"\mathopen{}\left( x \mathclose{}\right)"),
@@ -38,7 +38,7 @@ def test_visit_tuple(code: str, latex: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "code,latex",
+    ("code", "latex"),
     [
         ("[]", r"\mathopen{}\left[  \mathclose{}\right]"),
         ("[x]", r"\mathopen{}\left[ x \mathclose{}\right]"),
@@ -53,7 +53,7 @@ def test_visit_list(code: str, latex: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "code,latex",
+    ("code", "latex"),
     [
         # TODO(odashi): Support set().
         # ("set()", r"\mathopen{}\left\{  \mathclose{}\right\}"),
@@ -69,7 +69,7 @@ def test_visit_set(code: str, latex: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "code,latex",
+    ("code", "latex"),
     [
         ("[i for i in n]", r"\mathopen{}\left[ i \mid i \in n \mathclose{}\right]"),
         (
@@ -119,7 +119,7 @@ def test_visit_listcomp(code: str, latex: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "code,latex",
+    ("code", "latex"),
     [
         ("{i for i in n}", r"\mathopen{}\left\{ i \mid i \in n \mathclose{}\right\}"),
         (
@@ -169,7 +169,7 @@ def test_visit_setcomp(code: str, latex: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "code,latex",
+    ("code", "latex"),
     [
         ("foo(x)", r"\mathrm{foo} \mathopen{}\left( x \mathclose{}\right)"),
         ("f(x)", r"f \mathopen{}\left( x \mathclose{}\right)"),
@@ -216,7 +216,7 @@ def test_visit_call(code: str, latex: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "code,latex",
+    ("code", "latex"),
     [
         ("log(x)**2", r"\mathopen{}\left( \log x \mathclose{}\right)^{2}"),
         ("log(x**2)", r"\log \mathopen{}\left( x^{2} \mathclose{}\right)"),
@@ -233,7 +233,7 @@ def test_visit_call_with_pow(code: str, latex: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "src_suffix,dest_suffix",
+    ("src_suffix", "dest_suffix"),
     [
         # No arguments
         ("()", r" \mathopen{}\left( \mathclose{}\right)"),
@@ -347,7 +347,7 @@ def test_visit_call_sum_prod(src_suffix: str, dest_suffix: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "code,latex",
+    ("code", "latex"),
     [
         # 2 clauses
         (
@@ -385,7 +385,7 @@ def test_visit_call_sum_prod_multiple_comprehension(code: str, latex: str) -> No
 
 
 @pytest.mark.parametrize(
-    "src_suffix,dest_suffix",
+    ("src_suffix", "dest_suffix"),
     [
         (
             "(i for i in x if i < y)",
@@ -411,7 +411,7 @@ def test_visit_call_sum_prod_with_if(src_suffix: str, dest_suffix: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "code,latex",
+    ("code", "latex"),
     [
         (
             "x if x < y else y",
@@ -446,7 +446,7 @@ def test_if_then_else(code: str, latex: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "code,latex",
+    ("code", "latex"),
     [
         # x op y
         ("x**y", r"x^{y}"),
@@ -627,7 +627,7 @@ def test_visit_binop(code: str, latex: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "code,latex",
+    ("code", "latex"),
     [
         # With literals
         ("+x", r"+x"),
@@ -666,7 +666,7 @@ def test_visit_unaryop(code: str, latex: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "code,latex",
+    ("code", "latex"),
     [
         # 1 comparator
         ("a == b", "a = b"),
@@ -720,7 +720,7 @@ def test_visit_compare(code: str, latex: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "code,latex",
+    ("code", "latex"),
     [
         # With literals
         ("a and b", r"a \land b"),
@@ -767,7 +767,7 @@ def test_visit_boolop(code: str, latex: str) -> None:
 
 @utils.require_at_most(7)
 @pytest.mark.parametrize(
-    "code,cls,latex",
+    ("code", "cls", "latex"),
     [
         ("0", ast.Num, "0"),
         ("1", ast.Num, "1"),
@@ -792,7 +792,7 @@ def test_visit_constant_lagacy(code: str, cls: type[ast.expr], latex: str) -> No
 
 @utils.require_at_least(8)
 @pytest.mark.parametrize(
-    "code,latex",
+    ("code", "latex"),
     [
         ("0", "0"),
         ("1", "1"),
@@ -816,7 +816,7 @@ def test_visit_constant(code: str, latex: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "code,latex",
+    ("code", "latex"),
     [
         ("x[0]", "x_{0}"),
         ("x[0][1]", "x_{0, 1}"),
@@ -832,7 +832,7 @@ def test_visit_subscript(code: str, latex: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "code,latex",
+    ("code", "latex"),
     [
         ("a - b", r"a \setminus b"),
         ("a & b", r"a \cap b"),
@@ -847,7 +847,7 @@ def test_visit_binop_use_set_symbols(code: str, latex: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "code,latex",
+    ("code", "latex"),
     [
         ("a < b", r"a \subset b"),
         ("a <= b", r"a \subseteq b"),
@@ -862,7 +862,7 @@ def test_visit_compare_use_set_symbols(code: str, latex: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "code,latex",
+    ("code", "latex"),
     [
         ("array(1)", r"\mathrm{array} \mathopen{}\left( 1 \mathclose{}\right)"),
         (
@@ -906,7 +906,7 @@ def test_numpy_array(code: str, latex: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "code,latex",
+    ("code", "latex"),
     [
         ("zeros(0)", r"\mathbf{0}^{1 \times 0}"),
         ("zeros(1)", r"\mathbf{0}^{1 \times 1}"),
@@ -938,7 +938,7 @@ def test_zeros(code: str, latex: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "code,latex",
+    ("code", "latex"),
     [
         ("identity(0)", r"\mathbf{I}_{0}"),
         ("identity(1)", r"\mathbf{I}_{1}"),
@@ -959,7 +959,7 @@ def test_identity(code: str, latex: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "code,latex",
+    ("code", "latex"),
     [
         ("transpose(A)", r"\mathbf{A}^\intercal"),
         ("transpose(b)", r"\mathbf{b}^\intercal"),
@@ -980,7 +980,7 @@ def test_transpose(code: str, latex: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "code,latex",
+    ("code", "latex"),
     [
         ("det(A)", r"\det \mathopen{}\left( \mathbf{A} \mathclose{}\right)"),
         ("det(b)", r"\det \mathopen{}\left( \mathbf{b} \mathclose{}\right)"),
@@ -1009,7 +1009,7 @@ def test_determinant(code: str, latex: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "code,latex",
+    ("code", "latex"),
     [
         (
             "matrix_rank(A)",
@@ -1051,7 +1051,7 @@ def test_matrix_rank(code: str, latex: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "code,latex",
+    ("code", "latex"),
     [
         ("matrix_power(A, 2)", r"\mathbf{A}^{2}"),
         ("matrix_power(b, 2)", r"\mathbf{b}^{2}"),
@@ -1086,7 +1086,7 @@ def test_matrix_power(code: str, latex: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "code,latex",
+    ("code", "latex"),
     [
         ("inv(A)", r"\mathbf{A}^{-1}"),
         ("inv(b)", r"\mathbf{b}^{-1}"),
@@ -1111,7 +1111,7 @@ def test_inv(code: str, latex: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "code,latex",
+    ("code", "latex"),
     [
         ("pinv(A)", r"\mathbf{A}^{+}"),
         ("pinv(b)", r"\mathbf{b}^{+}"),
@@ -1138,7 +1138,7 @@ def test_pinv(code: str, latex: str) -> None:
 # Check list for #89.
 # https://github.com/google/latexify_py/issues/89#issuecomment-1344967636
 @pytest.mark.parametrize(
-    "left,right,latex",
+    ("left", "right", "latex"),
     [
         ("2", "3", r"2 \cdot 3"),
         ("2", "y", "2 y"),

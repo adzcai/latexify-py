@@ -6,7 +6,8 @@ import ast
 import re
 from typing import Callable
 
-from latexify import ast_utils, exceptions
+from latexify import exceptions
+from latexify.ast_utils import extract_function_name_or_none
 from latexify.codegen import codegen_utils, expression_rules
 from latexify.codegen.custom_functions import custom_functions
 from latexify.codegen.identifier_converter import IdentifierConverter
@@ -85,13 +86,11 @@ class ExpressionCodegen(ast.NodeVisitor):
 
     def visit_Call(self, node: ast.Call) -> str:
         """Visit a Call node."""
-        func_name = ast_utils.extract_function_name_or_none(node)
+        func_name = extract_function_name_or_none(node)
 
         # Special treatments for some functions.
-        if func_name in self._custom_functions:
-            out = self._custom_functions[func_name](self, node)
-            if out is not None:
-                return out
+        if func_name in self._custom_functions and (out := self._custom_functions[func_name](self, node)) is not None:
+            return out
 
         # Obtains the codegen rule.
         rule = expression_rules.BUILTIN_FUNCS.get(func_name) if func_name is not None else None
@@ -107,7 +106,7 @@ class ExpressionCodegen(ast.NodeVisitor):
             # Factorial "x!" is treated as a special case: it requires both inner/outer
             # parentheses for correct interpretation.
             force_wrap_factorial = isinstance(arg, ast.Call) and (
-                func_name == "factorial" or ast_utils.extract_function_name_or_none(arg) == "factorial"
+                func_name == "factorial" or extract_function_name_or_none(arg) == "factorial"
             )
             # Note(odashi):
             # Wrapping is also required if the argument is pow.
@@ -209,7 +208,7 @@ class ExpressionCodegen(ast.NodeVisitor):
             return self.visit(child)
 
         if isinstance(child, ast.Call):
-            child_fn_name = ast_utils.extract_function_name_or_none(child)
+            child_fn_name = extract_function_name_or_none(child)
             rule = expression_rules.BUILTIN_FUNCS.get(child_fn_name) if child_fn_name is not None else None
             if rule is not None and rule.is_wrapped:
                 return self.visit(child)

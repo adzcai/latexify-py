@@ -161,7 +161,7 @@ def _generate_matrix(visitor, node: ast.Call) -> str | None:
     return generate_matrix_from_array(rows)
 
 
-def _generate_zeros(visitor, node: ast.Call) -> str | None:
+def _generate_zeros(_visitor, node: ast.Call) -> str | None:
     """Generates LaTeX for numpy.zeros.
     Args:
         node: ast.Call node containing the appropriate method invocation.
@@ -195,7 +195,7 @@ def _generate_zeros(visitor, node: ast.Call) -> str | None:
     return rf"\mathbf{{0}}^{{{dims_latex}}}"
 
 
-def _generate_identity(visitor, node: ast.Call) -> str | None:
+def _generate_identity(_visitor, node: ast.Call) -> str | None:
     """Generates LaTeX for numpy.identity.
     Args:
         node: ast.Call node containing the appropriate method invocation.
@@ -215,7 +215,7 @@ def _generate_identity(visitor, node: ast.Call) -> str | None:
     return rf"\mathbf{{I}}_{{{ndims}}}"
 
 
-def _generate_transpose(visitor, node: ast.Call) -> str | None:
+def _generate_transpose(_visitor, node: ast.Call) -> str | None:
     """Generates LaTeX for numpy.transpose.
     Args:
         node: ast.Call node containing the appropriate method invocation.

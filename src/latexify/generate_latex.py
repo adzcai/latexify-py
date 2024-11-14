@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import argparse
 import enum
 from typing import TYPE_CHECKING, Any
+
+import nbformat
 
 from latexify import ast_utils, codegen, transformers
 
@@ -94,3 +97,32 @@ def get_latex(
         ).visit(tree)
 
     raise ValueError(f"Unrecognized style: {style}")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Generate LaTeX code from a Python file.")
+
+    parser.add_argument("file", type=str, help="Path to the Python file or Jupyter notebok.")
+
+    args = parser.parse_args()
+
+    # Load the notebook
+    with open(args.file) as f:
+        nb = nbformat.read(f, as_version=4)
+
+    # # Extract all functions from the notebook
+    # functions = []
+
+    # for cell in nb.cells:
+    #     if cell.cell_type == 'code':
+    #         source = cell.source
+    #         lines = source.split('\n')
+    #         for i, line in enumerate(lines):
+    #             if line.startswith('def '):
+    #                 function_name = line.split('(')[0].split('def ')[1]
+    #                 functions.append(function_name)
+
+    # # Print the extracted functions
+    # print("Functions in the notebook:")
+    # for func in functions:
+    #     print(func)

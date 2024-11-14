@@ -7,7 +7,7 @@ from latexify.codegen import identifier_converter
 
 
 @pytest.mark.parametrize(
-    "name,use_math_symbols,use_mathrm,expected",
+    ("name", "use_math_symbols", "use_mathrm", "expected"),
     [
         ("a", False, True, ("a", True)),
         ("_", False, True, (r"\mathrm{\_}", False)),

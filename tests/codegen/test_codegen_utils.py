@@ -10,7 +10,7 @@ from latexify.codegen.codegen_utils import convert_constant
 
 
 @pytest.mark.parametrize(
-    "constant,latex",
+    ("constant", "latex"),
     [
         (None, r"\mathrm{None}"),
         (True, r"\mathrm{True}"),

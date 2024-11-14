@@ -35,7 +35,7 @@ def test_make_attribute() -> None:
 
 @utils.require_at_most(7)
 @pytest.mark.parametrize(
-    "value,expected",
+    ("value", "expected"),
     [
         (None, ast.NameConstant(value=None)),
         (False, ast.NameConstant(value=False)),
@@ -57,7 +57,7 @@ def test_make_constant_legacy(value: Any, expected: ast.Constant) -> None:
 
 @utils.require_at_least(8)
 @pytest.mark.parametrize(
-    "value,expected",
+    ("value", "expected"),
     [
         (None, ast.Constant(value=None)),
         (False, ast.Constant(value=False)),
@@ -84,7 +84,7 @@ def test_make_constant_invalid() -> None:
 
 @utils.require_at_most(7)
 @pytest.mark.parametrize(
-    "value,expected",
+    ("value", "expected"),
     [
         (ast.Bytes(s=b"foo"), True),
         (ast.Constant("bar"), True),
@@ -102,7 +102,7 @@ def test_is_constant_legacy(value: ast.AST, expected: bool) -> None:
 
 @utils.require_at_least(8)
 @pytest.mark.parametrize(
-    "value,expected",
+    ("value", "expected"),
     [
         (ast.Constant(value="foo"), True),
         (ast.Expr(value=ast.Constant(value=123)), False),
@@ -115,7 +115,7 @@ def test_is_constant(value: ast.AST, expected: bool) -> None:
 
 @utils.require_at_most(7)
 @pytest.mark.parametrize(
-    "value,expected",
+    ("value", "expected"),
     [
         (ast.Bytes(s=b"foo"), False),
         (ast.Constant("bar"), True),
@@ -133,7 +133,7 @@ def test_is_str_legacy(value: ast.AST, expected: bool) -> None:
 
 @utils.require_at_least(8)
 @pytest.mark.parametrize(
-    "value,expected",
+    ("value", "expected"),
     [
         (ast.Constant(value=123), False),
         (ast.Constant(value="foo"), True),
@@ -187,7 +187,7 @@ def test_extract_int_invalid() -> None:
 
 
 @pytest.mark.parametrize(
-    "value,expected",
+    ("value", "expected"),
     [
         (
             ast.Call(

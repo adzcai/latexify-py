@@ -12,7 +12,7 @@ from tests import utils
 
 @utils.require_at_least(8)
 @pytest.mark.parametrize(
-    "code,start,stop,step,start_int,stop_int,step_int",
+    ("code", "start", "stop", "step", "start_int", "stop_int", "step_int"),
     [
         (
             "range(x)",
@@ -152,7 +152,7 @@ def test_analyze_range_invalid(code: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "before,after",
+    ("before", "after"),
     [
         ("n + 1", "n"),
         ("n + 2", "n + 1"),

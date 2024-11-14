@@ -26,7 +26,7 @@ def test_invalid_prefix(prefix: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "prefixes,expected",
+    ("prefixes", "expected"),
     [
         (set(), make_name("foo")),
         ({"foo"}, make_name("foo")),
@@ -43,7 +43,7 @@ def test_name(prefixes: set[str], expected: ast.expr) -> None:
 
 
 @pytest.mark.parametrize(
-    "prefixes,expected",
+    ("prefixes", "expected"),
     [
         (set(), make_attr(make_name("foo"), "bar")),
         ({"fo"}, make_attr(make_name("foo"), "bar")),
@@ -62,7 +62,7 @@ def test_attr_1(prefixes: set[str], expected: ast.expr) -> None:
 
 
 @pytest.mark.parametrize(
-    "prefixes,expected",
+    ("prefixes", "expected"),
     [
         (set(), make_attr(make_attr(make_name("foo"), "bar"), "baz")),
         ({"fo"}, make_attr(make_attr(make_name("foo"), "bar"), "baz")),
