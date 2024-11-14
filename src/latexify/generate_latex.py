@@ -79,10 +79,11 @@ def get_latex(
         tree = transformers.FunctionExpander(expand_functions).visit(tree)
 
     # Generates LaTeX.
-    if style == Style.ALGORITHMIC:
+    if style in {Style.ALGORITHMIC, Style.IPYTHON_ALGORITHMIC}:
         return codegen.AlgorithmicCodegen(
             use_math_symbols=use_math_symbols,
             use_set_symbols=use_set_symbols,
+            ipython=style == Style.IPYTHON_ALGORITHMIC,
         ).visit(tree)
     elif style == Style.FUNCTION:
         return codegen.FunctionCodegen(
@@ -90,13 +91,8 @@ def get_latex(
             use_signature=use_signature,
             use_set_symbols=use_set_symbols,
         ).visit(tree)
-    elif style == Style.IPYTHON_ALGORITHMIC:
-        return codegen.IPythonAlgorithmicCodegen(
-            use_math_symbols=use_math_symbols,
-            use_set_symbols=use_set_symbols,
-        ).visit(tree)
-
-    raise ValueError(f"Unrecognized style: {style}")
+    else:
+        raise ValueError(f"Unrecognized style: {style}")
 
 
 if __name__ == "__main__":

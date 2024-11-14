@@ -6,7 +6,7 @@ import ast
 import sys
 
 from latexify import ast_utils, exceptions
-from latexify.codegen import codegen_utils, expression_codegen, identifier_converter
+from latexify.codegen import expression_codegen, identifier_converter
 
 
 class FunctionCodegen(ast.NodeVisitor):
@@ -104,7 +104,7 @@ class FunctionCodegen(ast.NodeVisitor):
         return (
             self._expression_codegen.visit(node.value)
             if node.value is not None
-            else codegen_utils.convert_constant(None)
+            else expression_codegen.convert_constant(None)
         )
 
     def visit_If(self, node: ast.If) -> str:

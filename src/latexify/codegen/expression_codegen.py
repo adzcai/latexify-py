@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import ast
 import re
-from typing import Callable
+from typing import Any, Callable
 
 from latexify import exceptions
 from latexify.ast_utils import extract_function_name_or_none
-from latexify.codegen import codegen_utils, expression_rules
+from latexify.codegen import expression_rules
 from latexify.codegen.custom_functions import custom_functions
 from latexify.codegen.identifier_converter import IdentifierConverter
 
@@ -142,32 +142,32 @@ class ExpressionCodegen(ast.NodeVisitor):
     # From Python 3.8
     def visit_Constant(self, node: ast.Constant) -> str:
         """Visit a Constant node."""
-        return codegen_utils.convert_constant(node.value)
+        return convert_constant(node.value)
 
     # Until Python 3.7
     def visit_Num(self, node: ast.Num) -> str:
         """Visit a Num node."""
-        return codegen_utils.convert_constant(node.n)
+        return convert_constant(node.n)
 
     # Until Python 3.7
     def visit_Str(self, node: ast.Str) -> str:
         """Visit a Str node."""
-        return codegen_utils.convert_constant(node.s)
+        return convert_constant(node.s)
 
     # Until Python 3.7
     def visit_Bytes(self, node: ast.Bytes) -> str:
         """Visit a Bytes node."""
-        return codegen_utils.convert_constant(node.s)
+        return convert_constant(node.s)
 
     # Until Python 3.7
     def visit_NameConstant(self, node: ast.NameConstant) -> str:
         """Visit a NameConstant node."""
-        return codegen_utils.convert_constant(node.value)
+        return convert_constant(node.value)
 
     # Until Python 3.7
     def visit_Ellipsis(self, _node: ast.Ellipsis) -> str:
         """Visit an Ellipsis node."""
-        return codegen_utils.convert_constant(...)
+        return convert_constant(...)
 
     def _wrap_operand(self, child: ast.expr, parent_prec: int, *, force_wrap: bool = False) -> str:
         """Wraps the operand subtree with parentheses.
@@ -386,3 +386,26 @@ class ExpressionCodegen(ast.NodeVisitor):
         indices_str = ", ".join(indices)
 
         return f"{value}_{{{indices_str}}}"
+
+
+def convert_constant(value: Any) -> str:
+    """Helper to convert constant values to LaTeX.
+
+    Args:
+        value: A constant value.
+
+    Returns:
+        The LaTeX representation of `value`.
+    """
+    if value is None or isinstance(value, bool):
+        return r"\mathrm{" + str(value) + "}"
+    if isinstance(value, (int, float, complex)):
+        # TODO(odashi): Support other symbols for the imaginary unit than j.
+        return str(value)
+    if isinstance(value, str):
+        return r'\textrm{"' + value + '"}'
+    if isinstance(value, bytes):
+        return r"\textrm{" + str(value) + "}"
+    if value is ...:
+        return r"\cdots"
+    raise exceptions.LatexifyNotSupportedError(f"Unrecognized constant: {type(value).__name__}")
