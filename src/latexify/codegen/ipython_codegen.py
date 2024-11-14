@@ -10,7 +10,8 @@ from latexify.codegen.identifier_converter import IdentifierConverter
 class IPythonAlgorithmicCodegen(ast.NodeVisitor):
     """Codegen for single algorithms targeting IPython.
 
-    Doesn't use the `algorithmic` environment.
+    Doesn't use the `algorithmic` environment,
+    but otherwise should function almost identically to the `AlgorithmicCodegen` class.
 
     This codegen works for Module with single FunctionDef node to generate a single
     LaTeX expression of the given algorithm.
@@ -86,20 +87,33 @@ class IPythonAlgorithmicCodegen(ast.NodeVisitor):
             + r" \end{array}"
         )
 
-    # TODO(ZibingZhang): support \ELSIF
     def visit_If(self, node: ast.If) -> str:
         """Visit an If node."""
-        cond_latex = self._expression_codegen.visit(node.test)
-        with self._increment_level():
-            body_latex = self._LINE_BREAK.join(self.visit(stmt) for stmt in node.body)
-        latex = self._add_indent(rf"\mathbf{{if}} \ {cond_latex}{self._LINE_BREAK}{body_latex}")
 
-        if node.orelse:
-            latex += self._LINE_BREAK + self._add_indent(r"\mathbf{else} \\ ")
+        branches = [node]
+        while len(node.orelse) == 1 and isinstance(node.orelse[0], ast.If):
+            branches.append(node := node.orelse[0])
+
+        branches_latex = []
+        # if and elif statements
+        for i, branch in enumerate(branches):
+            # test
+            cond_latex = self._expression_codegen.visit(branch.test)
+            command = r"\mathbf{if}" if i == 0 else r"\mathbf{else if}"
+            branches_latex.append(self._add_indent(rf"{command} \ {cond_latex}"))
+
+            # body
             with self._increment_level():
-                latex += self._LINE_BREAK.join(self.visit(stmt) for stmt in node.orelse)
+                branches_latex.extend(self.visit(stmt) for stmt in branch.body)
 
-        return latex + self._LINE_BREAK + self._add_indent(r"\mathbf{end \ if}")
+        # else
+        if node.orelse:
+            branches_latex.append(self._add_indent(r"\mathbf{else}"))
+            with self._increment_level():
+                branches_latex.extend(self.visit(stmt) for stmt in node.orelse)
+
+        branches_latex.append(self._add_indent(r"\mathbf{end \ if}"))
+        return self._LINE_BREAK.join(branches_latex)
 
     def visit_Module(self, node: ast.Module) -> str:
         """Visit a Module node."""
