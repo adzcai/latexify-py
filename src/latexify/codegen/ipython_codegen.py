@@ -1,28 +1,23 @@
-"""Codegen for single algorithms."""
-
-from __future__ import annotations
-
 import ast
 import contextlib
-from typing import TYPE_CHECKING
+from collections.abc import Generator
 
 from latexify import exceptions
 from latexify.codegen.expression_codegen import ExpressionCodegen
 from latexify.codegen.identifier_converter import IdentifierConverter
 
-if TYPE_CHECKING:
-    from collections.abc import Generator
 
+class IPythonAlgorithmicCodegen(ast.NodeVisitor):
+    """Codegen for single algorithms targeting IPython.
 
-class AlgorithmicCodegen(ast.NodeVisitor):
-    """Codegen for single algorithms.
+    Doesn't use the `algorithmic` environment.
 
-    This subclasses the ast.NodeVisitor
-    to take in an AST rooted at a single FunctionDef node
-    and generate LaTeX `algpseudocode` code for the algorithm.
+    This codegen works for Module with single FunctionDef node to generate a single
+    LaTeX expression of the given algorithm.
     """
 
-    SPACES_PER_INDENT = 4
+    _EM_PER_INDENT = 1
+    _LINE_BREAK = r" \\ "
 
     _identifier_converter: IdentifierConverter
     _indent_level: int
@@ -36,10 +31,7 @@ class AlgorithmicCodegen(ast.NodeVisitor):
             use_set_symbols: Whether to use set symbols or not.
         """
         self._expression_codegen = ExpressionCodegen(use_math_symbols=use_math_symbols, use_set_symbols=use_set_symbols)
-        self._identifier_converter = IdentifierConverter(
-            use_math_symbols=use_math_symbols,
-            use_mathrm=False,
-        )
+        self._identifier_converter = IdentifierConverter(use_math_symbols=use_math_symbols)
         self._indent_level = 0
 
     def generic_visit(self, node: ast.AST) -> str:
@@ -50,11 +42,11 @@ class AlgorithmicCodegen(ast.NodeVisitor):
         operands: list[str] = [self._expression_codegen.visit(target) for target in node.targets]
         operands.append(self._expression_codegen.visit(node.value))
         operands_latex = r" \gets ".join(operands)
-        return self._add_indent(rf"\State ${operands_latex}$")
+        return self._add_indent(operands_latex)
 
     def visit_Expr(self, node: ast.Expr) -> str:
         """Visit an Expr node."""
-        return self._add_indent(rf"\State ${self._expression_codegen.visit(node.value)}$")
+        return self._add_indent(self._expression_codegen.visit(node.value))
 
     def visit_For(self, node: ast.For) -> str:
         """Visit a For node."""
@@ -64,12 +56,13 @@ class AlgorithmicCodegen(ast.NodeVisitor):
         target_latex = self._expression_codegen.visit(node.target)
         iter_latex = self._expression_codegen.visit(node.iter)
         with self._increment_level():
-            body_latex = "\n".join(self.visit(stmt) for stmt in node.body)
+            body_latex = self._LINE_BREAK.join(self.visit(stmt) for stmt in node.body)
 
         return (
-            self._add_indent(f"\\For{{${target_latex} \\in {iter_latex}$}}\n")
-            + f"{body_latex}\n"
-            + self._add_indent("\\EndFor")
+            self._add_indent(r"\mathbf{for}")
+            + rf" \ {target_latex} \in {iter_latex} \ \mathbf{{do}}{self._LINE_BREAK}"
+            + f"{body_latex}{self._LINE_BREAK}"
+            + self._add_indent(r"\mathbf{end \ for}")
         )
 
     # TODO(ZibingZhang): support nested functions
@@ -78,48 +71,35 @@ class AlgorithmicCodegen(ast.NodeVisitor):
         name_latex = self._identifier_converter.convert(node.name)[0]
 
         # Arguments
-        arg_strs = [self._identifier_converter.convert(arg.arg)[0] for arg in node.args.args]
-
-        latex = self._add_indent("\\begin{algorithmic}\n")
+        args_latex = [self._identifier_converter.convert(arg.arg)[0] for arg in node.args.args]
+        # Body
         with self._increment_level():
-            latex += self._add_indent(f"\\Function{{{name_latex}}}{{${', '.join(arg_strs)}$}}\n")
+            body_stmts_latex: list[str] = [self.visit(stmt) for stmt in node.body]
+        body_latex = self._LINE_BREAK.join(body_stmts_latex)
 
-            with self._increment_level():
-                # Body
-                body_strs: list[str] = [self.visit(stmt) for stmt in node.body]
-            body_latex = "\n".join(body_strs)
+        return (
+            r"\begin{array}{l} "
+            + self._add_indent(r"\mathbf{function}")
+            + rf" \ {name_latex}({', '.join(args_latex)})"
+            + f"{self._LINE_BREAK}{body_latex}{self._LINE_BREAK}"
+            + self._add_indent(r"\mathbf{end \ function}")
+            + r" \end{array}"
+        )
 
-            latex += f"{body_latex}\n"
-            latex += self._add_indent("\\EndFunction\n")
-        return latex + self._add_indent(r"\end{algorithmic}")
-
+    # TODO(ZibingZhang): support \ELSIF
     def visit_If(self, node: ast.If) -> str:
         """Visit an If node."""
+        cond_latex = self._expression_codegen.visit(node.test)
+        with self._increment_level():
+            body_latex = self._LINE_BREAK.join(self.visit(stmt) for stmt in node.body)
+        latex = self._add_indent(rf"\mathbf{{if}} \ {cond_latex}{self._LINE_BREAK}{body_latex}")
 
-        branches = [node]
-        while len(node.orelse) == 1 and isinstance(node.orelse[0], ast.If):
-            branches.append(node := node.orelse[0])
-
-        branches_latex = []
-        # if and elif statements
-        for i, branch in enumerate(branches):
-            # test
-            cond_latex = self._expression_codegen.visit(branch.test)
-            command = r"\If" if i == 0 else r"\ElsIf"
-            branches_latex.append(self._add_indent(f"{command}{{${cond_latex}$}}"))
-
-            # body
-            with self._increment_level():
-                branches_latex.extend(self.visit(stmt) for stmt in branch.body)
-
-        # else
         if node.orelse:
-            branches_latex.append(self._add_indent(r"\Else"))
+            latex += self._LINE_BREAK + self._add_indent(r"\mathbf{else} \\ ")
             with self._increment_level():
-                branches_latex.extend(self.visit(stmt) for stmt in node.orelse)
+                latex += self._LINE_BREAK.join(self.visit(stmt) for stmt in node.orelse)
 
-        branches_latex.append(self._add_indent(r"\EndIf"))
-        return "\n".join(branches_latex)
+        return latex + self._LINE_BREAK + self._add_indent(r"\mathbf{end \ if}")
 
     def visit_Module(self, node: ast.Module) -> str:
         """Visit a Module node."""
@@ -128,9 +108,9 @@ class AlgorithmicCodegen(ast.NodeVisitor):
     def visit_Return(self, node: ast.Return) -> str:
         """Visit a Return node."""
         return (
-            self._add_indent(rf"\State \Return ${self._expression_codegen.visit(node.value)}$")
+            self._add_indent(r"\mathbf{return} \ ") + self._expression_codegen.visit(node.value)
             if node.value is not None
-            else self._add_indent(r"\State \Return")
+            else self._add_indent(r"\mathbf{return}")
         )
 
     def visit_While(self, node: ast.While) -> str:
@@ -140,20 +120,24 @@ class AlgorithmicCodegen(ast.NodeVisitor):
 
         cond_latex = self._expression_codegen.visit(node.test)
         with self._increment_level():
-            body_latex = "\n".join(self.visit(stmt) for stmt in node.body)
-        return self._add_indent(f"\\While{{${cond_latex}$}}\n") + f"{body_latex}\n" + self._add_indent(r"\EndWhile")
+            body_latex = self._LINE_BREAK.join(self.visit(stmt) for stmt in node.body)
+        return (
+            self._add_indent(r"\mathbf{while} \ ")
+            + f"{cond_latex}{self._LINE_BREAK}{body_latex}{self._LINE_BREAK}"
+            + self._add_indent(r"\mathbf{end \ while}")
+        )
 
     def visit_Pass(self, _node: ast.Pass) -> str:
         """Visit a Pass node."""
-        return self._add_indent(r"\State $\mathbf{pass}$")
+        return self._add_indent(r"\mathbf{pass}")
 
     def visit_Break(self, _node: ast.Break) -> str:
         """Visit a Break node."""
-        return self._add_indent(r"\State $\mathbf{break}$")
+        return self._add_indent(r"\mathbf{break}")
 
     def visit_Continue(self, _node: ast.Continue) -> str:
         """Visit a Continue node."""
-        return self._add_indent(r"\State $\mathbf{continue}$")
+        return self._add_indent(r"\mathbf{continue}")
 
     @contextlib.contextmanager
     def _increment_level(self) -> Generator[None, None, None]:
@@ -168,4 +152,4 @@ class AlgorithmicCodegen(ast.NodeVisitor):
         Args:
             line: The line to add an indent to.
         """
-        return self._indent_level * self.SPACES_PER_INDENT * " " + line
+        return rf"\hspace{{{self._indent_level * self._EM_PER_INDENT}em}} {line}" if self._indent_level > 0 else line

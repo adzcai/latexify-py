@@ -7,7 +7,8 @@ import textwrap
 
 import pytest
 from latexify import exceptions
-from latexify.codegen.algorithmic_codegen import AlgorithmicCodegen, IPythonAlgorithmicCodegen
+from latexify.codegen.algorithmic_codegen import AlgorithmicCodegen
+from latexify.codegen.ipython_codegen import IPythonAlgorithmicCodegen
 
 
 def test_generic_visit() -> None:
