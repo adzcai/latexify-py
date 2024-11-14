@@ -91,7 +91,6 @@ class AlgorithmicCodegen(ast.NodeVisitor):
         block.add(r"\mathbf{end \ for}" if self._ipython else r"\EndFor")
         return str(block)
 
-    # TODO(ZibingZhang): support nested functions
     def visit_FunctionDef(self, node: ast.FunctionDef) -> str:
         """Visit a FunctionDef node."""
         name_latex = self._identifier_converter.convert(node.name)[0]
@@ -99,22 +98,28 @@ class AlgorithmicCodegen(ast.NodeVisitor):
         # Arguments
         arg_latex = [self._identifier_converter.convert(arg.arg)[0] for arg in node.args.args]
 
+        top = self._indent_level == 0
+
         if self._ipython:
             block = IndentedBlock(self)
-            block.add(r"\begin{array}{l} " + rf"\mathbf{{function}} \ {name_latex}({', '.join(arg_latex)})")
+            block.add(
+                (r"\begin{array}{l} " if top else "") + rf"\mathbf{{function}} \ {name_latex}({', '.join(arg_latex)})"
+            )
             with self._increment_level():
                 block.extend(node.body)
-            block.add(r"\mathbf{end \ function} \end{array}")
+            block.add(r"\mathbf{end \ function}" + (r" \end{array}" if top else ""))
 
         else:
             block = IndentedBlock(self)
-            block.add(r"\begin{algorithmic}")
+            if top:
+                block.add(r"\begin{algorithmic}")
             with self._increment_level():
                 block.add(f"\\Function{{{name_latex}}}{{${', '.join(arg_latex)}$}}")
                 with self._increment_level():
                     block.extend(node.body)
                 block.add(r"\EndFunction")
-            block.add(r"\end{algorithmic}")
+            if top:
+                block.add(r"\end{algorithmic}")
 
         return str(block)
 

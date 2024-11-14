@@ -26,9 +26,8 @@ def require_at_least(
     def decorator(fn: Callable[..., None]) -> Callable[..., None]:
         @functools.wraps(fn)
         def wrapper(*args, **kwargs):
-            if sys.version_info.minor < minor:
-                return
-            fn(*args, **kwargs)
+            if sys.version_info >= (3, minor):
+                fn(*args, **kwargs)
 
         return wrapper
 
@@ -50,9 +49,8 @@ def require_at_most(
     def decorator(fn: Callable[..., None]) -> Callable[..., None]:
         @functools.wraps(fn)
         def wrapper(*args, **kwargs):
-            if sys.version_info.minor > minor:
-                return
-            fn(*args, **kwargs)
+            if sys.version_info.minor <= minor:
+                fn(*args, **kwargs)
 
         return wrapper
 
