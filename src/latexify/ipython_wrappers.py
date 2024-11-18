@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
 from typing import Any, Callable, cast
+from pathlib import Path
 
 from latexify import generate_latex
 from latexify.exceptions import LatexifyError
@@ -42,13 +43,6 @@ class LatexifiedRepr(metaclass=ABCMeta):
     def __str__(self) -> str: ...
 
     @abstractmethod
-    def _repr_html_(self) -> str:
-        """IPython hook to display HTML visualization.
-
-        See https://ipython.readthedocs.io/en/stable/config/integrating.html
-        """
-
-    @abstractmethod
     def _repr_latex_(self) -> str:
         """IPython hook to display LaTeX visualization.
 
@@ -66,7 +60,7 @@ class LatexifiedAlgorithm(LatexifiedRepr):
     _latex: str | LatexifyError
     _ipython_latex: str | LatexifyError
 
-    def __init__(self, fn: Callable[..., Any], **kwargs) -> None:
+    def __init__(self, fn: Callable[..., Any], to_file: str | bool = False, **kwargs) -> None:
         """Initializer.
 
         Args:
@@ -84,16 +78,15 @@ class LatexifiedAlgorithm(LatexifiedRepr):
             self._ipython_latex = generate_latex.get_latex(fn, style=generate_latex.Style.IPYTHON_ALGORITHMIC, **kwargs)
         except LatexifyError as e:
             self._ipython_latex = e
+        
+        if to_file and isinstance(self._latex, str):
+            path = Path(to_file) if isinstance(to_file, str) else Path(f"{self.__name__}.tex")
+            if path.is_dir():
+                path = path / f"{self.__name__}.tex"
+            path.write_text(self._latex)
 
     def __str__(self) -> str:
         return self._latex if isinstance(self._latex, str) else self._latex.describe()
-
-    def _repr_html_(self) -> str:
-        return (
-            '<span style="color: red;">'
-            + ("HTML output not supported" if isinstance(self._ipython_latex, str) else self._ipython_latex.describe())
-            + "</span>"
-        )
 
     def _repr_latex_(self) -> str:
         return f"$ {self._ipython_latex} $" if isinstance(self._ipython_latex, str) else self._ipython_latex.describe()
@@ -114,14 +107,6 @@ class LatexifiedFunction(LatexifiedRepr):
 
     def __str__(self) -> str:
         return self._latex if isinstance(self._latex, str) else cast(str, self._error)
-
-    def _repr_html_(self) -> str:
-        """IPython hook to display HTML visualization."""
-        return (
-            '<span style="color: red;">'
-            + ("HTML output not supported" if isinstance(self._latex, str) else self._latex.describe())
-            + "</span>"
-        )
 
     def _repr_latex_(self) -> str:
         """IPython hook to display LaTeX visualization."""
