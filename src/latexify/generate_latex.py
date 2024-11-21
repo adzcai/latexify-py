@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from latexify.ast_utils import parse_function
 from latexify.codegen.function_codegen import FunctionCodegen
-from latexify.codegen.plugin import Plugin
 from latexify.codegen.plugin_stack import default_stack
 from latexify.transformers.assignment_reducer import AssignmentReducer
 from latexify.transformers.aug_assign_replacer import AugAssignReplacer
@@ -17,7 +15,9 @@ from latexify.transformers.prefix_trimmer import PrefixTrimmer
 
 if TYPE_CHECKING:
     import ast
-    from collections.abc import Generator, Iterable
+    from collections.abc import Callable, Generator, Iterable
+
+    from latexify.codegen.plugin import Plugin
 
 
 def get_transformers(

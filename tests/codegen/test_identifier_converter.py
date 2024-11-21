@@ -30,5 +30,6 @@ from latexify.codegen.identifier_converter import IdentifierConverter
 )
 def test_identifier_converter(name: str, use_math_symbols: bool, use_mathrm: bool, expected: tuple[str, bool]) -> None:
     assert (
-        IdentifierConverter(use_math_symbols=use_math_symbols, use_mathrm=use_mathrm).convert_identifier(name) == expected
+        IdentifierConverter(use_math_symbols=use_math_symbols, use_mathrm=use_mathrm).convert_identifier(name)
+        == expected
     )

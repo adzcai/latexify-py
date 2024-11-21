@@ -16,7 +16,6 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
 
 
-
 @overload
 def algorithmic(fn: Callable[..., Any], to_file: str | None = None, **kwargs: Any) -> LatexifyWrapper: ...
 

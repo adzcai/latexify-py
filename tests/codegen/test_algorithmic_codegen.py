@@ -23,7 +23,6 @@ ipython_visitor = default_stack(IPythonLatexifier())
 assert_latex_equal_ipython = partial(assert_latex_equal_, ipython_visitor)
 
 
-
 def test_generic_visit() -> None:
     class UnknownNode(ast.AST):
         pass
@@ -427,4 +426,3 @@ def test_visit_break_ipython() -> None:
 
 def test_visit_continue_ipython() -> None:
     assert_latex_equal_ipython("continue", ast.Continue, r"\mathbf{continue}")
-

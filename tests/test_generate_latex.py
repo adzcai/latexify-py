@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from latexify import function
 from latexify.generate_latex import get_latex
 
 

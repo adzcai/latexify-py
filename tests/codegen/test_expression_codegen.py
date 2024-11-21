@@ -3,19 +3,16 @@
 from __future__ import annotations
 
 import ast
-from functools import partial
 
 import pytest
-from latexify import ast_utils, exceptions
+from latexify import exceptions
+from latexify.ast_utils import parse_expr
 from latexify.codegen.plugin_stack import default_stack
-
 from latexify.plugins.numpy import NumpyPlugin
-from latexify.plugins.sum_prod import SumProdPlugin
-from tests import utils
-from tests.integration.utils import check_function
+
+from tests.utils import assert_expr_equal, require_at_least, require_at_most
 
 visitor = default_stack(NumpyPlugin())
-check_function = partial(check_function, plugins=[SumProdPlugin()])
 
 
 def test_generic_visit() -> None:
@@ -39,7 +36,7 @@ def test_generic_visit() -> None:
     ],
 )
 def test_visit_tuple(code: str, latex: str) -> None:
-    utils.assert_expr_equal(code, ast.Tuple, latex)
+    assert_expr_equal(code, ast.Tuple, latex)
 
 
 @pytest.mark.parametrize(
@@ -52,7 +49,7 @@ def test_visit_tuple(code: str, latex: str) -> None:
     ],
 )
 def test_visit_list(code: str, latex: str) -> None:
-    utils.assert_expr_equal(code, ast.List, latex)
+    assert_expr_equal(code, ast.List, latex)
 
 
 @pytest.mark.parametrize(
@@ -66,7 +63,7 @@ def test_visit_list(code: str, latex: str) -> None:
     ],
 )
 def test_visit_set(code: str, latex: str) -> None:
-    utils.assert_expr_equal(code, ast.Set, latex)
+    assert_expr_equal(code, ast.Set, latex)
 
 
 @pytest.mark.parametrize(
@@ -114,8 +111,7 @@ def test_visit_set(code: str, latex: str) -> None:
     ],
 )
 def test_visit_listcomp(code: str, latex: str) -> None:
-    utils.assert_expr_equal(code, ast.ListComp, latex)
-
+    assert_expr_equal(code, ast.ListComp, latex)
 
 
 @pytest.mark.parametrize(
@@ -163,7 +159,7 @@ def test_visit_listcomp(code: str, latex: str) -> None:
     ],
 )
 def test_visit_setcomp(code: str, latex: str) -> None:
-    utils.assert_expr_equal(code, ast.SetComp, latex)
+    assert_expr_equal(code, ast.SetComp, latex)
 
 
 @pytest.mark.parametrize(
@@ -208,7 +204,7 @@ def test_visit_setcomp(code: str, latex: str) -> None:
     ],
 )
 def test_visit_call(code: str, latex: str) -> None:
-    utils.assert_expr_equal(code, ast.Call, latex)
+    assert_expr_equal(code, ast.Call, latex)
 
 
 @pytest.mark.parametrize(
@@ -223,180 +219,7 @@ def test_visit_call(code: str, latex: str) -> None:
     ],
 )
 def test_visit_call_with_pow(code: str, latex: str) -> None:
-    utils.assert_expr_equal(code, (ast.Call, ast.BinOp), latex)
-
-
-@pytest.mark.parametrize(
-    ("src_suffix", "dest_suffix"),
-    [
-        # No arguments
-        ("()", r" \mathopen{}\left( \mathclose{}\right)"),
-        # No comprehension
-        ("(x)", r" x"),
-        (
-            "([1, 2])",
-            r" \mathopen{}\left[ 1, 2 \mathclose{}\right]",
-        ),
-        (
-            "({1, 2})",
-            r" \mathopen{}\left\{ 1, 2 \mathclose{}\right\}",
-        ),
-        ("(f(x))", r" f \mathopen{}\left( x \mathclose{}\right)"),
-        # Single comprehension
-        ("(i for i in x)", r"_{i \in x}^{} \mathopen{}\left({i}\mathclose{}\right)"),
-        (
-            "(i for i in [1, 2])",
-            r"_{i \in \mathopen{}\left[ 1, 2 \mathclose{}\right]}^{} " r"\mathopen{}\left({i}\mathclose{}\right)",
-        ),
-        (
-            "(i for i in {1, 2})",
-            r"_{i \in \mathopen{}\left\{ 1, 2 \mathclose{}\right\}}^{}" r" \mathopen{}\left({i}\mathclose{}\right)",
-        ),
-        (
-            "(i for i in f(x))",
-            r"_{i \in f \mathopen{}\left( x \mathclose{}\right)}^{}" r" \mathopen{}\left({i}\mathclose{}\right)",
-        ),
-        (
-            "(i for i in range(n))",
-            r"_{i = 0}^{n - 1} \mathopen{}\left({i}\mathclose{}\right)",
-        ),
-        (
-            "(i for i in range(n + 1))",
-            r"_{i = 0}^{n} \mathopen{}\left({i}\mathclose{}\right)",
-        ),
-        (
-            "(i for i in range(n + 2))",
-            r"_{i = 0}^{n + 1} \mathopen{}\left({i}\mathclose{}\right)",
-        ),
-        (
-            # ast.parse() does not recognize negative integers.
-            "(i for i in range(n - -1))",
-            r"_{i = 0}^{n - -1 - 1} \mathopen{}\left({i}\mathclose{}\right)",
-        ),
-        (
-            "(i for i in range(n - 1))",
-            r"_{i = 0}^{n - 2} \mathopen{}\left({i}\mathclose{}\right)",
-        ),
-        (
-            "(i for i in range(n + m))",
-            r"_{i = 0}^{n + m - 1} \mathopen{}\left({i}\mathclose{}\right)",
-        ),
-        (
-            "(i for i in range(n - m))",
-            r"_{i = 0}^{n - m - 1} \mathopen{}\left({i}\mathclose{}\right)",
-        ),
-        (
-            "(i for i in range(3))",
-            r"_{i = 0}^{2} \mathopen{}\left({i}\mathclose{}\right)",
-        ),
-        (
-            "(i for i in range(3 + 1))",
-            r"_{i = 0}^{3} \mathopen{}\left({i}\mathclose{}\right)",
-        ),
-        (
-            "(i for i in range(3 + 2))",
-            r"_{i = 0}^{3 + 1} \mathopen{}\left({i}\mathclose{}\right)",
-        ),
-        (
-            "(i for i in range(3 - 1))",
-            r"_{i = 0}^{3 - 2} \mathopen{}\left({i}\mathclose{}\right)",
-        ),
-        (
-            # ast.parse() does not recognize negative integers.
-            "(i for i in range(3 - -1))",
-            r"_{i = 0}^{3 - -1 - 1} \mathopen{}\left({i}\mathclose{}\right)",
-        ),
-        (
-            "(i for i in range(3 + m))",
-            r"_{i = 0}^{3 + m - 1} \mathopen{}\left({i}\mathclose{}\right)",
-        ),
-        (
-            "(i for i in range(3 - m))",
-            r"_{i = 0}^{3 - m - 1} \mathopen{}\left({i}\mathclose{}\right)",
-        ),
-        (
-            "(i for i in range(n, m))",
-            r"_{i = n}^{m - 1} \mathopen{}\left({i}\mathclose{}\right)",
-        ),
-        (
-            "(i for i in range(1, m))",
-            r"_{i = 1}^{m - 1} \mathopen{}\left({i}\mathclose{}\right)",
-        ),
-        (
-            "(i for i in range(n, 3))",
-            r"_{i = n}^{2} \mathopen{}\left({i}\mathclose{}\right)",
-        ),
-        (
-            "(i for i in range(n, m, k))",
-            r"_{i \in \mathrm{range} \mathopen{}\left( n, m, k \mathclose{}\right)}^{}"
-            r" \mathopen{}\left({i}\mathclose{}\right)",
-        ),
-    ],
-)
-def test_visit_call_sum_prod(src_suffix: str, dest_suffix: str) -> None:
-    for src_fn, dest_fn in [("fsum", r"\sum"), ("sum", r"\sum"), ("prod", r"\prod")]:
-        utils.assert_expr_equal(src_fn + src_suffix, ast.Call, dest_fn + dest_suffix)
-
-
-
-@pytest.mark.parametrize(
-    ("code", "latex"),
-    [
-        # 2 clauses
-        (
-            "sum(i for y in x for i in y)",
-            r"\sum_{y \in x}^{} \sum_{i \in y}^{} " r"\mathopen{}\left({i}\mathclose{}\right)",
-        ),
-        (
-            "sum(i for y in x for z in y for i in z)",
-            r"\sum_{y \in x}^{} \sum_{z \in y}^{} \sum_{i \in z}^{} " r"\mathopen{}\left({i}\mathclose{}\right)",
-        ),
-        # 3 clauses
-        (
-            "prod(i for y in x for i in y)",
-            r"\prod_{y \in x}^{} \prod_{i \in y}^{} " r"\mathopen{}\left({i}\mathclose{}\right)",
-        ),
-        (
-            "prod(i for y in x for z in y for i in z)",
-            r"\prod_{y \in x}^{} \prod_{z \in y}^{} \prod_{i \in z}^{} " r"\mathopen{}\left({i}\mathclose{}\right)",
-        ),
-        # reduce stop parameter
-        (
-            "sum(i for i in range(n+1))",
-            r"\sum_{i = 0}^{n} \mathopen{}\left({i}\mathclose{}\right)",
-        ),
-        (
-            "prod(i for i in range(n-1))",
-            r"\prod_{i = 0}^{n - 2} \mathopen{}\left({i}\mathclose{}\right)",
-        ),
-    ],
-)
-def test_visit_call_sum_prod_multiple_comprehension(code: str, latex: str) -> None:
-    utils.assert_expr_equal(code, ast.Call, latex)
-
-
-@pytest.mark.parametrize(
-    ("src_suffix", "dest_suffix"),
-    [
-        (
-            "(i for i in x if i < y)",
-            r"_{\mathopen{}\left( i \in x \mathclose{}\right) "
-            r"\land \mathopen{}\left( i < y \mathclose{}\right)}^{} "
-            r"\mathopen{}\left({i}\mathclose{}\right)",
-        ),
-        (
-            "(i for i in x if i < y if f(i))",
-            r"_{\mathopen{}\left( i \in x \mathclose{}\right)"
-            r" \land \mathopen{}\left( i < y \mathclose{}\right)"
-            r" \land \mathopen{}\left( f \mathopen{}\left("
-            r" i \mathclose{}\right) \mathclose{}\right)}^{}"
-            r" \mathopen{}\left({i}\mathclose{}\right)",
-        ),
-    ],
-)
-def test_visit_call_sum_prod_with_if(src_suffix: str, dest_suffix: str) -> None:
-    for src_fn, dest_fn in [("sum", r"\sum"), ("prod", r"\prod")]:
-        utils.assert_expr_equal(src_fn + src_suffix, ast.Call, dest_fn + dest_suffix)
+    assert_expr_equal(code, (ast.Call, ast.BinOp), latex)
 
 
 @pytest.mark.parametrize(
@@ -429,7 +252,7 @@ def test_visit_call_sum_prod_with_if(src_suffix: str, dest_suffix: str) -> None:
     ],
 )
 def test_if_then_else(code: str, latex: str) -> None:
-    utils.assert_expr_equal(code, ast.IfExp, latex)
+    assert_expr_equal(code, ast.IfExp, latex)
 
 
 @pytest.mark.parametrize(
@@ -608,7 +431,7 @@ def test_if_then_else(code: str, latex: str) -> None:
     ],
 )
 def test_visit_binop(code: str, latex: str) -> None:
-    utils.assert_expr_equal(code, ast.BinOp, latex)
+    assert_expr_equal(code, ast.BinOp, latex)
 
 
 @pytest.mark.parametrize(
@@ -645,7 +468,7 @@ def test_visit_binop(code: str, latex: str) -> None:
     ],
 )
 def test_visit_unaryop(code: str, latex: str) -> None:
-    utils.assert_expr_equal(code, ast.UnaryOp, latex)
+    assert_expr_equal(code, ast.UnaryOp, latex)
 
 
 @pytest.mark.parametrize(
@@ -697,7 +520,7 @@ def test_visit_unaryop(code: str, latex: str) -> None:
     ],
 )
 def test_visit_compare(code: str, latex: str) -> None:
-    utils.assert_expr_equal(code, ast.Compare, latex)
+    assert_expr_equal(code, ast.Compare, latex)
 
 
 @pytest.mark.parametrize(
@@ -741,10 +564,10 @@ def test_visit_compare(code: str, latex: str) -> None:
     ],
 )
 def test_visit_boolop(code: str, latex: str) -> None:
-    utils.assert_expr_equal(code, ast.BoolOp, latex)
+    assert_expr_equal(code, ast.BoolOp, latex)
 
 
-@utils.require_at_most(7)
+@require_at_most(7)
 @pytest.mark.parametrize(
     ("code", "cls", "latex"),
     [
@@ -764,10 +587,10 @@ def test_visit_boolop(code: str, latex: str) -> None:
     ],
 )
 def test_visit_constant_lagacy(code: str, cls: type[ast.expr], latex: str) -> None:
-    utils.assert_expr_equal(code, cls, latex)
+    assert_expr_equal(code, cls, latex)
 
 
-@utils.require_at_least(8)
+@require_at_least(8)
 @pytest.mark.parametrize(
     ("code", "latex"),
     [
@@ -787,7 +610,7 @@ def test_visit_constant_lagacy(code: str, cls: type[ast.expr], latex: str) -> No
     ],
 )
 def test_visit_constant(code: str, latex: str) -> None:
-    utils.assert_expr_equal(code, ast.Constant, latex)
+    assert_expr_equal(code, ast.Constant, latex)
 
 
 @pytest.mark.parametrize(
@@ -801,7 +624,7 @@ def test_visit_constant(code: str, latex: str) -> None:
     ],
 )
 def test_visit_subscript(code: str, latex: str) -> None:
-    utils.assert_expr_equal(code, ast.Subscript, latex)
+    assert_expr_equal(code, ast.Subscript, latex)
 
 
 @pytest.mark.parametrize(
@@ -814,7 +637,7 @@ def test_visit_subscript(code: str, latex: str) -> None:
     ],
 )
 def test_visit_binop_use_set_symbols(code: str, latex: str) -> None:
-    tree = ast_utils.parse_expr(code)
+    tree = parse_expr(code)
     assert isinstance(tree, ast.BinOp)
     assert default_stack(use_set_symbols=True).visit(tree) == latex
 
@@ -829,307 +652,9 @@ def test_visit_binop_use_set_symbols(code: str, latex: str) -> None:
     ],
 )
 def test_visit_compare_use_set_symbols(code: str, latex: str) -> None:
-    tree = ast_utils.parse_expr(code)
+    tree = parse_expr(code)
     assert isinstance(tree, ast.Compare)
     assert default_stack(use_set_symbols=True).visit(tree) == latex
-
-
-@pytest.mark.parametrize(
-    ("code", "latex"),
-    [
-        ("array([1])", r"\begin{bmatrix} 1 \end{bmatrix}"),
-        ("array([1, 2, 3])", r"\begin{bmatrix} 1 & 2 & 3 \end{bmatrix}"),
-        ("array([[1]])", r"\begin{bmatrix} 1 \end{bmatrix}"),
-        ("array([[1], [2], [3]])", r"\begin{bmatrix} 1 \\ 2 \\ 3 \end{bmatrix}"),
-        (
-            "array([[1, 2], [3, 4], [5, 6]])",
-            r"\begin{bmatrix} 1 & 2 \\ 3 & 4 \\ 5 & 6 \end{bmatrix}",
-        ),
-        ("ndarray([1])", r"\begin{bmatrix} 1 \end{bmatrix}"),
-    ],
-)
-def test_numpy_array(code: str, latex: str) -> None:
-    utils.assert_expr_equal(code, ast.Call, latex)
-
-
-@pytest.mark.parametrize(
-    ("code", "latex"),
-    [
-        ("array(1)", r"\mathrm{array} \mathopen{}\left( 1 \mathclose{}\right)"),
-        (
-            "array([])",
-            r"\mathrm{array} \mathopen{}\left(" r" \mathopen{}\left[  \mathclose{}\right]" r" \mathclose{}\right)",
-        ),
-        (
-            "array([[]])",
-            r"\mathrm{array} \mathopen{}\left("
-            r" \mathopen{}\left[ \mathopen{}\left["
-            r"  \mathclose{}\right] \mathclose{}\right]"
-            r" \mathclose{}\right)",
-        ),
-        (
-            "array([[1], [2], [3, 4]])",
-            r"\mathrm{array} \mathopen{}\left("
-            r" \mathopen{}\left["
-            r" \mathopen{}\left[ 1 \mathclose{}\right],"
-            r" \mathopen{}\left[ 2 \mathclose{}\right],"
-            r" \mathopen{}\left[ 3, 4 \mathclose{}\right]"
-            r" \mathclose{}\right]"
-            r" \mathclose{}\right)",
-        ),
-        ("ndarray(1)", r"\mathrm{ndarray} \mathopen{}\left( 1 \mathclose{}\right)"),
-    ],
-)
-def test_numpy_array_unsupported(code: str, latex: str) -> None:
-    utils.assert_expr_equal(code, ast.Call, latex)
-
-
-@pytest.mark.parametrize(
-    ("code", "latex"),
-    [
-        ("zeros(0)", r"\mathbf{0}^{1 \times 0}"),
-        ("zeros(1)", r"\mathbf{0}^{1 \times 1}"),
-        ("zeros(2)", r"\mathbf{0}^{1 \times 2}"),
-        ("zeros(())", r"0"),
-        ("zeros((0,))", r"\mathbf{0}^{1 \times 0}"),
-        ("zeros((1,))", r"\mathbf{0}^{1 \times 1}"),
-        ("zeros((2,))", r"\mathbf{0}^{1 \times 2}"),
-        ("zeros((0, 0))", r"\mathbf{0}^{0 \times 0}"),
-        ("zeros((1, 1))", r"\mathbf{0}^{1 \times 1}"),
-        ("zeros((2, 3))", r"\mathbf{0}^{2 \times 3}"),
-        ("zeros((0, 0, 0))", r"\mathbf{0}^{0 \times 0 \times 0}"),
-        ("zeros((1, 1, 1))", r"\mathbf{0}^{1 \times 1 \times 1}"),
-        ("zeros((2, 3, 5))", r"\mathbf{0}^{2 \times 3 \times 5}"),
-        # Unsupported
-        ("zeros()", r"\mathrm{zeros} \mathopen{}\left( \mathclose{}\right)"),
-        ("zeros(x)", r"\mathrm{zeros} \mathopen{}\left( x \mathclose{}\right)"),
-        ("zeros(0, x)", r"\mathrm{zeros} \mathopen{}\left( 0, x \mathclose{}\right)"),
-        (
-            "zeros((x,))",
-            r"\mathrm{zeros} \mathopen{}\left(" r" \mathopen{}\left( x \mathclose{}\right)" r" \mathclose{}\right)",
-        ),
-    ],
-)
-def test_zeros(code: str, latex: str) -> None:
-    utils.assert_expr_equal(code, ast.Call, latex)
-
-
-@pytest.mark.parametrize(
-    ("code", "latex"),
-    [
-        ("identity(0)", r"\mathbf{I}_{0}"),
-        ("identity(1)", r"\mathbf{I}_{1}"),
-        ("identity(2)", r"\mathbf{I}_{2}"),
-    ],
-)
-def test_identity(code: str, latex: str) -> None:
-    utils.assert_expr_equal(code, ast.Call, latex)
-
-
-@pytest.mark.parametrize(
-    ("code", "latex"),
-    [
-        ("identity()", r"\mathrm{identity} \mathopen{}\left( \mathclose{}\right)"),
-        ("identity(x)", r"\mathrm{identity} \mathopen{}\left( x \mathclose{}\right)"),
-        (
-            "identity(0, x)",
-            r"\mathrm{identity} \mathopen{}\left( 0, x \mathclose{}\right)",
-        ),
-    ],
-)
-def test_identity_unsupported(code: str, latex: str) -> None:
-    utils.assert_expr_equal(code, ast.Call, latex)
-
-
-@pytest.mark.parametrize(
-    ("code", "latex"),
-    [
-        ("transpose(A)", r"\mathbf{A}^\intercal"),
-        ("transpose(b)", r"\mathbf{b}^\intercal"),
-    ],
-)
-def test_transpose(code: str, latex: str) -> None:
-    utils.assert_expr_equal(code, ast.Call, latex)
-
-
-@pytest.mark.parametrize(
-    ("code", "latex"),
-    [
-        ("transpose()", r"\mathrm{transpose} \mathopen{}\left( \mathclose{}\right)"),
-        ("transpose(2)", r"\mathrm{transpose} \mathopen{}\left( 2 \mathclose{}\right)"),
-        (
-            "transpose(a, (1, 0))",
-            r"\mathrm{transpose} \mathopen{}\left( a, "
-            r"\mathopen{}\left( 1, 0 \mathclose{}\right) \mathclose{}\right)",
-        ),
-    ],
-)
-def test_transpose_unsupported(code: str, latex: str) -> None:
-    utils.assert_expr_equal(code, ast.Call, latex)
-
-
-@pytest.mark.parametrize(
-    ("code", "latex"),
-    [
-        ("det(A)", r"\det \mathopen{}\left( \mathbf{A} \mathclose{}\right)"),
-        ("det(b)", r"\det \mathopen{}\left( \mathbf{b} \mathclose{}\right)"),
-        (
-            "det([[1, 2], [3, 4]])",
-            r"\det \mathopen{}\left( \begin{bmatrix} 1 & 2 \\" r" 3 & 4 \end{bmatrix} \mathclose{}\right)",
-        ),
-        (
-            "det([[1, 2, 3], [4, 5, 6], [7, 8, 9]])",
-            r"\det \mathopen{}\left( \begin{bmatrix} 1 & 2 & 3 \\ 4 & 5 & 6 \\"
-            r" 7 & 8 & 9 \end{bmatrix} \mathclose{}\right)",
-        ),
-        # Unsupported
-        ("det()", r"\mathrm{det} \mathopen{}\left( \mathclose{}\right)"),
-        ("det(2)", r"\mathrm{det} \mathopen{}\left( 2 \mathclose{}\right)"),
-        (
-            "det(a, (1, 0))",
-            r"\mathrm{det} \mathopen{}\left( a, " r"\mathopen{}\left( 1, 0 \mathclose{}\right) \mathclose{}\right)",
-        ),
-    ],
-)
-def test_determinant(code: str, latex: str) -> None:
-    utils.assert_expr_equal(code, ast.Call, latex)
-
-
-@pytest.mark.parametrize(
-    ("code", "latex"),
-    [
-        (
-            "matrix_rank(A)",
-            r"\mathrm{rank} \mathopen{}\left( \mathbf{A} \mathclose{}\right)",
-        ),
-        (
-            "matrix_rank(b)",
-            r"\mathrm{rank} \mathopen{}\left( \mathbf{b} \mathclose{}\right)",
-        ),
-        (
-            "matrix_rank([[1, 2], [3, 4]])",
-            r"\mathrm{rank} \mathopen{}\left( \begin{bmatrix} 1 & 2 \\" r" 3 & 4 \end{bmatrix} \mathclose{}\right)",
-        ),
-        (
-            "matrix_rank([[1, 2, 3], [4, 5, 6], [7, 8, 9]])",
-            r"\mathrm{rank} \mathopen{}\left( \begin{bmatrix} 1 & 2 & 3 \\ 4 & 5 & 6 \\"
-            r" 7 & 8 & 9 \end{bmatrix} \mathclose{}\right)",
-        ),
-        # Unsupported
-        (
-            "matrix_rank()",
-            r"\mathrm{matrix\_rank} \mathopen{}\left( \mathclose{}\right)",
-        ),
-        (
-            "matrix_rank(2)",
-            r"\mathrm{matrix\_rank} \mathopen{}\left( 2 \mathclose{}\right)",
-        ),
-        (
-            "matrix_rank(a, (1, 0))",
-            r"\mathrm{matrix\_rank} \mathopen{}\left( a, "
-            r"\mathopen{}\left( 1, 0 \mathclose{}\right) \mathclose{}\right)",
-        ),
-    ],
-)
-def test_matrix_rank(code: str, latex: str) -> None:
-    utils.assert_expr_equal(code, ast.Call, latex)
-
-
-@pytest.mark.parametrize(
-    ("code", "latex"),
-    [
-        ("matrix_power(A, 2)", r"\mathbf{A}^{2}"),
-        ("matrix_power(b, 2)", r"\mathbf{b}^{2}"),
-        (
-            "matrix_power([[1, 2], [3, 4]], 2)",
-            r"\begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}^{2}",
-        ),
-        (
-            "matrix_power([[1, 2, 3], [4, 5, 6], [7, 8, 9]], 42)",
-            r"\begin{bmatrix} 1 & 2 & 3 \\ 4 & 5 & 6 \\ 7 & 8 & 9 \end{bmatrix}^{42}",
-        ),
-    ],
-)
-def test_matrix_power(code: str, latex: str) -> None:
-    utils.assert_expr_equal(code, ast.Call, latex)
-
-
-@pytest.mark.parametrize(
-    ("code", "latex"),
-    [
-        (
-            "matrix_power()",
-            r"\mathrm{matrix\_power} \mathopen{}\left( \mathclose{}\right)",
-        ),
-        (
-            "matrix_power(2)",
-            r"\mathrm{matrix\_power} \mathopen{}\left( 2 \mathclose{}\right)",
-        ),
-        (
-            "matrix_power(a, (1, 0))",
-            r"\mathrm{matrix\_power} \mathopen{}\left( a, "
-            r"\mathopen{}\left( 1, 0 \mathclose{}\right) \mathclose{}\right)",
-        ),
-    ],
-)
-def test_matrix_power_unsupported(code: str, latex: str) -> None:
-    utils.assert_expr_equal(code, ast.Call, latex)
-
-
-@pytest.mark.parametrize(
-    ("code", "latex"),
-    [
-        ("inv(A)", r"\mathbf{A}^{-1}"),
-        ("inv(b)", r"\mathbf{b}^{-1}"),
-        ("inv([[1, 2], [3, 4]])", r"\begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}^{-1}"),
-        (
-            "inv([[1, 2, 3], [4, 5, 6], [7, 8, 9]])",
-            r"\begin{bmatrix} 1 & 2 & 3 \\ 4 & 5 & 6 \\ 7 & 8 & 9 \end{bmatrix}^{-1}",
-        ),
-        # Unsupported
-        ("inv()", r"\mathrm{inv} \mathopen{}\left( \mathclose{}\right)"),
-        ("inv(2)", r"\mathrm{inv} \mathopen{}\left( 2 \mathclose{}\right)"),
-        (
-            "inv(a, (1, 0))",
-            r"\mathrm{inv} \mathopen{}\left( a, " r"\mathopen{}\left( 1, 0 \mathclose{}\right) \mathclose{}\right)",
-        ),
-    ],
-)
-def test_inv(code: str, latex: str) -> None:
-    utils.assert_expr_equal(code, ast.Call, latex)
-
-
-
-
-@pytest.mark.parametrize(
-    ("code", "latex"),
-    [
-        ("pinv(A)", r"\mathbf{A}^{\dagger}"),
-        ("pinv(b)", r"\mathbf{b}^{\dagger}"),
-        ("pinv([[1, 2], [3, 4]])", r"\begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}^{\dagger}"),
-        (
-            "pinv([[1, 2, 3], [4, 5, 6], [7, 8, 9]])",
-            r"\begin{bmatrix} 1 & 2 & 3 \\ 4 & 5 & 6 \\ 7 & 8 & 9 \end{bmatrix}^{\dagger}",
-        ),
-    ],
-)
-def test_pinv(code: str, latex: str) -> None:
-    utils.assert_expr_equal(code, ast.Call, latex)
-
-
-@pytest.mark.parametrize(
-    ("code", "latex"),
-    [
-        ("pinv()", r"\mathrm{pinv} \mathopen{}\left( \mathclose{}\right)"),
-        ("pinv(2)", r"\mathrm{pinv} \mathopen{}\left( 2 \mathclose{}\right)"),
-        (
-            "pinv(a, (1, 0))",
-            r"\mathrm{pinv} \mathopen{}\left( a, " r"\mathopen{}\left( 1, 0 \mathclose{}\right) \mathclose{}\right)",
-        ),
-    ],
-)
-def test_pinv_unsupported(code: str, latex: str) -> None:
-    utils.assert_expr_equal(code, ast.Call, latex)
 
 
 # Check list for #89.
@@ -1213,6 +738,6 @@ def test_pinv_unsupported(code: str, latex: str) -> None:
 )
 def test_remove_multiply(left: str, right: str, latex: str) -> None:
     for op in ["*", "@"]:
-        tree = ast_utils.parse_expr(f"{left} {op} {right}")
+        tree = parse_expr(f"{left} {op} {right}")
         assert isinstance(tree, ast.BinOp)
         assert default_stack(use_math_symbols=True).visit(tree) == latex
