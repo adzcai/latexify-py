@@ -33,7 +33,7 @@ class Stack(ast.NodeVisitor):
         """
         for plugin in self._plugins:
             try:
-                return plugin.local_visit(node)
+                return ast.NodeVisitor.visit(plugin, node)
             except NotImplementedError:
                 pass
 

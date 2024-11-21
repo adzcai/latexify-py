@@ -22,10 +22,7 @@ class Plugin(ast.NodeVisitor, metaclass=ABCMeta):
         """Redirects the visit call to the base plugin."""
         return self._base.visit(node)
 
-    def local_visit(self, node: ast.AST) -> str:
-        return super().visit(node)
-
-    def generic_visit(self, node):
+    def generic_visit(self, _node: ast.AST):
         # differentiate from actual LatexifyNotSupportedError
         # that gets thrown by the Stack
         raise NotImplementedError
