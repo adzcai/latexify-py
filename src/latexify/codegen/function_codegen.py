@@ -6,43 +6,33 @@ import ast
 import sys
 
 from latexify import ast_utils, exceptions
-from latexify.codegen import expression_codegen, identifier_converter
+from latexify.codegen import expression_codegen
+from latexify.codegen.plugin import _ArgumentsPlugin
 
 
-class FunctionCodegen(ast.NodeVisitor):
+class FunctionCodegen(_ArgumentsPlugin):
     """Codegen for single functions.
 
     This codegen works for Module with single FunctionDef node to generate a single
     LaTeX expression of the given function.
+
+    Args:
+        use_signature: Whether to add the function signature (e.g. `f(x) = ...`)
+            before the expression or not.
     """
 
-    _identifier_converter: identifier_converter.IdentifierConverter
     _use_signature: bool
 
     def __init__(
         self,
         *,
-        use_math_symbols: bool = False,
         use_signature: bool = True,
-        use_set_symbols: bool = False,
+        **_,
     ) -> None:
-        """Initializer.
-
-        Args:
-            use_math_symbols: Whether to convert identifiers with a math symbol surface
-                (e.g., "alpha") to the LaTeX symbol (e.g., "\\alpha").
-            use_signature: Whether to add the function signature before the expression
-                or not.
-            use_set_symbols: Whether to use set symbols or not.
-        """
-        self._expression_codegen = expression_codegen.ExpressionCodegen(
-            use_math_symbols=use_math_symbols, use_set_symbols=use_set_symbols
-        )
-        self._identifier_converter = identifier_converter.IdentifierConverter(use_math_symbols=use_math_symbols)
         self._use_signature = use_signature
 
-    def generic_visit(self, node: ast.AST) -> str:
-        raise exceptions.LatexifyNotSupportedError(f"Unsupported AST: {type(node).__name__}")
+    def wrap_ipython(self, latex: str) -> str:
+        return f"$$ {latex} $$"
 
     def visit_Module(self, node: ast.Module) -> str:
         """Visit a Module node."""
@@ -51,10 +41,7 @@ class FunctionCodegen(ast.NodeVisitor):
     def visit_FunctionDef(self, node: ast.FunctionDef) -> str:
         """Visit a FunctionDef node."""
         # Function name
-        name_str = self._identifier_converter.convert(node.name)[0]
-
-        # Arguments
-        arg_strs = [self._identifier_converter.convert(arg.arg)[0] for arg in node.args.args]
+        name_str = self.visit(node.name)
 
         body_strs: list[str] = []
 
@@ -77,12 +64,11 @@ class FunctionCodegen(ast.NodeVisitor):
         elif not isinstance(return_stmt, (ast.Return, ast.If)):
             raise exceptions.LatexifySyntaxError(f"Unsupported last statement: {type(return_stmt).__name__}")
 
-        # Function signature: f(x, ...)
-        signature_str = name_str + "(" + ", ".join(arg_strs) + ")"
-
         # Function definition: f(x, ...) \triangleq ...
         return_str = self.visit(return_stmt)
         if self._use_signature:
+            # Function signature: f(x, ...)
+            signature_str = name_str + "(" + self.visit(node.args) + ")"
             return_str = signature_str + " = " + return_str
 
         if not body_strs:
@@ -95,17 +81,13 @@ class FunctionCodegen(ast.NodeVisitor):
 
     def visit_Assign(self, node: ast.Assign) -> str:
         """Visit an Assign node."""
-        operands: list[str] = [self._expression_codegen.visit(t) for t in node.targets]
-        operands.append(self._expression_codegen.visit(node.value))
+        operands: list[str] = [self.visit(t) for t in node.targets]
+        operands.append(self.visit(node.value))
         return " = ".join(operands)
 
     def visit_Return(self, node: ast.Return) -> str:
         """Visit a Return node."""
-        return (
-            self._expression_codegen.visit(node.value)
-            if node.value is not None
-            else expression_codegen.convert_constant(None)
-        )
+        return self.visit(node.value) if node.value is not None else expression_codegen.convert_constant(None)
 
     def visit_If(self, node: ast.If) -> str:
         """Visit an If node."""
@@ -117,7 +99,7 @@ class FunctionCodegen(ast.NodeVisitor):
             if len(current_stmt.body) != 1 or len(current_stmt.orelse) != 1:
                 raise exceptions.LatexifySyntaxError("Multiple statements are not supported in If nodes.")
 
-            cond_latex = self._expression_codegen.visit(current_stmt.test)
+            cond_latex = self.visit(current_stmt.test)
             true_latex = self.visit(current_stmt.body[0])
             latex += true_latex + r", & \mathrm{if} \ " + cond_latex + r" \\ "
             current_stmt = current_stmt.orelse[0]
@@ -134,7 +116,7 @@ class FunctionCodegen(ast.NodeVisitor):
         ):
             raise exceptions.LatexifySyntaxError("Match statement must contain the wildcard.")
 
-        subject_latex = self._expression_codegen.visit(node.subject)
+        subject_latex = self.visit(node.subject)
         case_latexes: list[str] = []
 
         for i, case in enumerate(node.cases):
@@ -152,5 +134,5 @@ class FunctionCodegen(ast.NodeVisitor):
 
     def visit_MatchValue(self, node: ast.MatchValue) -> str:
         """Visit a MatchValue node"""
-        latex = self._expression_codegen.visit(node.value)
+        latex = self.visit(node.value)
         return " = " + latex

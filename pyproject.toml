@@ -42,7 +42,7 @@ test = [
 ]
 
 [tool.ruff.lint]
-ignore = ["N802", "EM101", "EM102", "FBT001", "TRY003", "PLR2004", "RET505", "S101"]
+ignore = ["N802", "EM101", "EM102", "FBT001", "TRY003", "FBT002", "PLR2004", "RET505", "S101"]
 per-file-ignores = { "tests/**.py" = ["RET504", "ARG001"] }
 
 [tool.hatch.envs.hatch-test]

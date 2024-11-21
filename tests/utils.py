@@ -5,10 +5,34 @@ from __future__ import annotations
 import ast
 import functools
 import sys
+import textwrap
 from typing import TYPE_CHECKING, cast
+
+from latexify.ast_utils import parse_expr
+from latexify.codegen.plugin_stack import default_stack
+from latexify.plugins.numpy import NumpyPlugin
+from latexify.plugins.sum_prod import SumProdPlugin
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+    from latexify.codegen.plugin import Plugin
+
+
+visitor = default_stack(SumProdPlugin(), NumpyPlugin())
+
+
+def assert_expr_equal(src: str, tp: type[ast.AST], latex: str) -> None:
+    node = parse_expr(src)
+    assert isinstance(node, tp)
+    assert visitor.visit(node) == latex
+
+
+def assert_latex_equal(latexifier: Plugin, code: str, tp: type[ast.AST], latex: str) -> None:
+    node = ast.parse(textwrap.dedent(code)).body[0]
+    assert isinstance(node, tp)
+    generated = latexifier.visit(node)
+    assert generated == textwrap.dedent(latex).strip(), generated
 
 
 def require_at_least(

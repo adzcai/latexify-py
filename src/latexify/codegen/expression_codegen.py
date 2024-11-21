@@ -4,19 +4,28 @@ from __future__ import annotations
 
 import ast
 import re
-from typing import Any, Callable
+from typing import Any
 
-from latexify import exceptions
 from latexify.ast_utils import extract_function_name_or_none
 from latexify.codegen import expression_rules
-from latexify.codegen.custom_functions import custom_functions
-from latexify.codegen.identifier_converter import IdentifierConverter
+from latexify.codegen.plugin import Plugin
+from latexify.exceptions import LatexifyNotSupportedError
 
 
-class ExpressionCodegen(ast.NodeVisitor):
-    """Codegen for single expressions."""
+class ExpressionVisitor(Plugin):
+    """Translates single expressions to LaTeX.
 
-    _identifier_converter: IdentifierConverter
+    This converter applies following rules:
+        - `foo` --> `\\foo`, if `use_math_symbols == True` and the given identifier
+        matches a supported math symbol name.
+        - `x` --> `x`, if the given identifier is exactly 1 character (except `_`)
+        - `foo_bar` --> `\\mathrm{foo\\_bar}`, otherwise.
+
+    Args:
+        use_math_symbols: Whether to convert identifiers with a math symbol
+            surface (e.g., "alpha") to the LaTeX symbol (e.g., "\\alpha").
+        use_set_symbols: Whether to use set symbols for comparison operators.
+    """
 
     _bin_op_rules: dict[type[ast.operator], expression_rules.BinOpRule]
     _compare_ops: dict[type[ast.cmpop], str]
@@ -24,52 +33,39 @@ class ExpressionCodegen(ast.NodeVisitor):
     def __init__(
         self,
         *,
-        use_math_symbols: bool = False,
         use_set_symbols: bool = False,
-        custom_functions: dict[str, Callable[[ast.Node], str]] = custom_functions,
+        **_,
     ) -> None:
-        """Initializer.
-
-        Args:
-            use_math_symbols: Whether to convert identifiers with a math symbol
-                surface (e.g., "alpha") to the LaTeX symbol (e.g., "\\alpha").
-            use_set_symbols: Whether to use set symbols or not.
-        """
-        self._identifier_converter = IdentifierConverter(use_math_symbols=use_math_symbols)
         self._bin_op_rules = expression_rules.SET_BIN_OP_RULES if use_set_symbols else expression_rules.BIN_OP_RULES
         self._compare_ops = expression_rules.SET_COMPARE_OPS if use_set_symbols else expression_rules.COMPARE_OPS
-        self._custom_functions = custom_functions
-
-    def generic_visit(self, node: ast.AST) -> str:
-        raise exceptions.LatexifyNotSupportedError(f"Unsupported AST: {type(node).__name__}")
 
     def visit_Tuple(self, node: ast.Tuple) -> str:
-        """Visit a Tuple node."""
-        elts = [self.visit(elt) for elt in node.elts]
-        return r"\mathopen{}\left( " + r", ".join(elts) + r" \mathclose{}\right)"
+        return r"\mathopen{}\left( " + self.visit_and_join(node.elts) + r" \mathclose{}\right)"
 
     def visit_List(self, node: ast.List) -> str:
-        """Visit a List node."""
-        elts = [self.visit(elt) for elt in node.elts]
-        return r"\mathopen{}\left[ " + r", ".join(elts) + r" \mathclose{}\right]"
+        return r"\mathopen{}\left[ " + self.visit_and_join(node.elts) + r" \mathclose{}\right]"
 
     def visit_Set(self, node: ast.Set) -> str:
-        """Visit a Set node."""
-        elts = [self.visit(elt) for elt in node.elts]
-        return r"\mathopen{}\left\{ " + r", ".join(elts) + r" \mathclose{}\right\}"
+        return r"\mathopen{}\left\{ " + self.visit_and_join(node.elts) + r" \mathclose{}\right\}"
 
     def visit_ListComp(self, node: ast.ListComp) -> str:
         """Visit a ListComp node."""
-        generators = [self.visit(comp) for comp in node.generators]
         return (
-            r"\mathopen{}\left[ " + self.visit(node.elt) + r" \mid " + ", ".join(generators) + r" \mathclose{}\right]"
+            r"\mathopen{}\left[ "
+            + self.visit(node.elt)
+            + r" \mid "
+            + self.visit_and_join(node.generators)
+            + r" \mathclose{}\right]"
         )
 
     def visit_SetComp(self, node: ast.SetComp) -> str:
         """Visit a SetComp node."""
-        generators = [self.visit(comp) for comp in node.generators]
         return (
-            r"\mathopen{}\left\{ " + self.visit(node.elt) + r" \mid " + ", ".join(generators) + r" \mathclose{}\right\}"
+            r"\mathopen{}\left\{ "
+            + self.visit(node.elt)
+            + r" \mid "
+            + self.visit_and_join(node.generators)
+            + r" \mathclose{}\right\}"
         )
 
     def visit_comprehension(self, node: ast.comprehension) -> str:
@@ -87,10 +83,6 @@ class ExpressionCodegen(ast.NodeVisitor):
     def visit_Call(self, node: ast.Call) -> str:
         """Visit a Call node."""
         func_name = extract_function_name_or_none(node)
-
-        # Special treatments for some functions.
-        if func_name in self._custom_functions and (out := self._custom_functions[func_name](self, node)) is not None:
-            return out
 
         # Obtains the codegen rule.
         rule = expression_rules.BUILTIN_FUNCS.get(func_name) if func_name is not None else None
@@ -115,7 +107,7 @@ class ExpressionCodegen(ast.NodeVisitor):
             arg_latex = self._wrap_operand(arg, precedence, force_wrap=force_wrap_factorial or force_wrap_pow)
             elements = [rule.left, arg_latex, rule.right]
         else:
-            arg_latex = ", ".join(self.visit(arg) for arg in node.args)
+            arg_latex = self.visit_and_join(node.args)
             if rule.is_wrapped:
                 elements = [rule.left, arg_latex, rule.right]
             else:
@@ -132,12 +124,12 @@ class ExpressionCodegen(ast.NodeVisitor):
     def visit_Attribute(self, node: ast.Attribute) -> str:
         """Visit an Attribute node."""
         vstr = self.visit(node.value)
-        astr = self._identifier_converter.convert(node.attr)[0]
+        astr = self.visit(node.attr)
         return vstr + "." + astr
 
     def visit_Name(self, node: ast.Name) -> str:
         """Visit a Name node."""
-        return self._identifier_converter.convert(node.id)[0]
+        return self.visit(node.id)
 
     # From Python 3.8
     def visit_Constant(self, node: ast.Constant) -> str:
@@ -379,7 +371,7 @@ class ExpressionCodegen(ast.NodeVisitor):
         return value, indices
 
     def visit_Subscript(self, node: ast.Subscript) -> str:
-        """Visitor a Subscript node."""
+        """Visit a Subscript node (e.g. x[i][j])."""
         value, indices = self._convert_nested_subscripts(node)
 
         # TODO(odashi): "[i][j][...]" may be a possible representation as well as "i, j. ..."
@@ -403,9 +395,29 @@ def convert_constant(value: Any) -> str:
         # TODO(odashi): Support other symbols for the imaginary unit than j.
         return str(value)
     if isinstance(value, str):
-        return r'\textrm{"' + value + '"}'
+        return r'\textrm{"' + _escape(value) + '"}'
     if isinstance(value, bytes):
         return r"\textrm{" + str(value) + "}"
     if value is ...:
         return r"\cdots"
-    raise exceptions.LatexifyNotSupportedError(f"Unrecognized constant: {type(value).__name__}")
+    raise LatexifyNotSupportedError(f"Unrecognized constant: {type(value).__name__}")
+
+
+def _escape(latex: str):
+    """Escape special characters in the latex string."""
+    # See https://tex.stackexchange.com/a/34586
+    trans = str.maketrans(
+        {
+            "\\": r"\textbackslash{}",
+            "~": r"\textasciitilde{}",
+            "^": r"\textasciicircum{}",
+            "&": r"\&",
+            "%": r"\%",
+            "$": r"\$",
+            "#": r"\#",
+            "_": r"\_",
+            "{": r"\{",
+            "}": r"\}",
+        }
+    )
+    return latex.translate(trans)

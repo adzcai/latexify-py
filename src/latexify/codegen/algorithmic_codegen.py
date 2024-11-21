@@ -4,17 +4,17 @@ from __future__ import annotations
 
 import ast
 import contextlib
+from abc import abstractmethod
 from typing import TYPE_CHECKING
 
-from latexify import exceptions
-from latexify.codegen.expression_codegen import ExpressionCodegen
-from latexify.codegen.identifier_converter import IdentifierConverter
+from latexify.codegen.plugin import _ArgumentsPlugin
+from latexify.exceptions import LatexifyNotSupportedError
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterable
 
 
-class AlgorithmicCodegen(ast.NodeVisitor):
+class AlgorithmicCodegen(_ArgumentsPlugin):
     """Codegen for single algorithms.
 
     This subclasses the ast.NodeVisitor
@@ -26,102 +26,67 @@ class AlgorithmicCodegen(ast.NodeVisitor):
 
     This codegen works for Module with single FunctionDef node to generate a single
     LaTeX expression of the given algorithm.
+
+    Args:
+        use_math_symbols: Whether to convert identifiers with a math symbol surface
+            (e.g., "alpha") to the LaTeX symbol (e.g., "\\alpha").
+        use_set_symbols: Whether to use set symbols or not.
     """
 
-    _identifier_converter: IdentifierConverter
-    _indent_level: int
-    SPACES_PER_INDENT = 4
-    EM_PER_INDENT = 1
+    _indent_level: int = 0
+    LINE_BREAK: str
 
-    def __init__(
-        self,
-        *,
-        use_math_symbols: bool = False,
-        use_set_symbols: bool = False,
-        ipython: bool = False,
-    ) -> None:
-        """Initializer.
-
-        Args:
-            use_math_symbols: Whether to convert identifiers with a math symbol surface
-                (e.g., "alpha") to the LaTeX symbol (e.g., "\\alpha").
-            use_set_symbols: Whether to use set symbols or not.
-        """
-        self._expression_codegen = ExpressionCodegen(use_math_symbols=use_math_symbols, use_set_symbols=use_set_symbols)
-        self._identifier_converter = IdentifierConverter(use_math_symbols=use_math_symbols, use_mathrm=ipython)
-        self._indent_level = 0
-        self.LINE_BREAK = r" \\ " if ipython else "\n"
-        self._ipython = ipython
-
-    def generic_visit(self, node: ast.AST) -> str:
-        raise exceptions.LatexifyNotSupportedError(f"Unsupported AST: {type(node).__name__}")
-
-    def _state(self, line: str) -> str:
-        if self._ipython:
-            return self.add_indent(line)
-        else:
-            return self.add_indent(rf"\State ${line}$")
-
-    def _expr(self, node: ast.AST) -> str:
-        return self._expression_codegen.visit(node)
+    @abstractmethod
+    def _statement(self, line: str) -> str:
+        """Add a statement to the algorithm."""
 
     def visit_Assign(self, node: ast.Assign) -> str:
         """Visit an Assign node."""
-        return self._state(r" \gets ".join(map(self._expr, (*node.targets, node.value))))
+        return self._statement(self.visit_and_join([*node.targets, node.value], r" \gets "))
 
     def visit_Expr(self, node: ast.Expr) -> str:
         """Visit an Expr node."""
-        return self._state(self._expr(node.value))
+        return self._statement(self.visit(node.value))
 
     def visit_For(self, node: ast.For) -> str:
         """Visit a For node."""
         if len(node.orelse) != 0:
-            raise exceptions.LatexifyNotSupportedError("For statement with the else clause is not supported")
+            raise LatexifyNotSupportedError("For statement with the else clause is not supported")
 
-        target_latex, iter_latex = self._expr(node.target), self._expr(node.iter)
+        target_latex, iter_latex = self.visit(node.target), self.visit(node.iter)
         block = IndentedBlock(self)
-        block.add(
-            rf"\mathbf{{for}} \ {target_latex} \in {iter_latex} \ \mathbf{{do}}"
-            if self._ipython
-            else f"\\For{{${target_latex} \\in {iter_latex}$}}"
-        )
+        block.add(self._begin_for(target_latex, iter_latex))
         with self._increment_level():
-            block.extend(node.body)
-
-        block.add(r"\mathbf{end \ for}" if self._ipython else r"\EndFor")
+            block.add(node.body)
+        block.add(self._end_for())
         return str(block)
+
+    @abstractmethod
+    def _begin_for(self, target_latex: str, iter_latex: str) -> str:
+        """Begin a For loop."""
+
+    @abstractmethod
+    def _end_for(self) -> str:
+        """End a For loop."""
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> str:
         """Visit a FunctionDef node."""
-        name_latex = self._identifier_converter.convert(node.name)[0]
-
-        # Arguments
-        arg_latex = [self._identifier_converter.convert(arg.arg)[0] for arg in node.args.args]
-
+        name_latex, args_latex = node.name, self.visit(node.args)
         top = self._indent_level == 0
-
-        if self._ipython:
-            block = IndentedBlock(self)
-            block.add(
-                (r"\begin{array}{l} " if top else "") + rf"\mathbf{{function}} \ {name_latex}({', '.join(arg_latex)})"
-            )
-            with self._increment_level():
-                block.extend(node.body)
-            block.add(r"\mathbf{end \ function}" + (r" \end{array}" if top else ""))
-
-        else:
-            block = IndentedBlock(self)
-            if top:
-                block.add(r"\begin{algorithmic}")
-            with self._increment_level():
-                block.add(f"\\Function{{{name_latex}}}{{${', '.join(arg_latex)}$}}")
-                with self._increment_level():
-                    block.extend(node.body)
-                block.add(r"\EndFunction")
-            if top:
-                block.add(r"\end{algorithmic}")
-
+        block = IndentedBlock(self)
+        block.add(self._begin_function(name_latex, args_latex, top))
+        with self._increment_level():
+            block.add(node.body)
+        block.add(self._end_function(top))
         return str(block)
+
+    @abstractmethod
+    def _begin_function(self, name_latex: str, arg_latex: str, top: bool) -> str:
+        """Begin a function definition."""
+
+    @abstractmethod
+    def _end_function(self, top: bool) -> str:
+        """End a function definition."""
 
     def visit_If(self, node: ast.If) -> str:
         """Visit an If node."""
@@ -134,26 +99,38 @@ class AlgorithmicCodegen(ast.NodeVisitor):
         # if and elif statements
         for i, branch in enumerate(branches):
             # test
-            cond_latex = self._expr(branch.test)
-            command = (
-                (r"\If" if i == 0 else r"\ElsIf")
-                if not self._ipython
-                else (r"\mathbf{if}" if i == 0 else r"\mathbf{else if}")
-            )
-            block.add(f"{command}{{${cond_latex}$}}" if not self._ipython else rf"{command} \ {cond_latex}")
+            cond_latex = self.visit(branch.test)
+            command = self._if(cond_latex) if i == 0 else self._elif(cond_latex)
+            block.add(command)
 
             # body
             with self._increment_level():
-                block.extend(branch.body)
+                block.add(branch.body)
 
         # else
         if node.orelse:
-            block.add(r"\Else" if not self._ipython else r"\mathbf{else}")
+            block.add(self._else())
             with self._increment_level():
-                block.extend(node.orelse)
+                block.add(node.orelse)
 
-        block.add(r"\EndIf" if not self._ipython else r"\mathbf{end \ if}")
+        block.add(self._end_if())
         return str(block)
+
+    @abstractmethod
+    def _if(self, cond_latex: str) -> str:
+        """If statement."""
+
+    @abstractmethod
+    def _elif(self, cond_latex: str) -> str:
+        """Elif statement."""
+
+    @abstractmethod
+    def _else(self) -> str:
+        """Else statement."""
+
+    @abstractmethod
+    def _end_if(self) -> str:
+        """End if statement."""
 
     def visit_Module(self, node: ast.Module) -> str:
         """Visit a Module node."""
@@ -161,42 +138,43 @@ class AlgorithmicCodegen(ast.NodeVisitor):
 
     def visit_Return(self, node: ast.Return) -> str:
         """Visit a Return node."""
-        return self.add_indent(
-            (
-                rf"\State \Return ${self._expr(node.value)}$"
-                if not self._ipython
-                else r"\mathbf{return} \ " + self._expr(node.value)
-            )
-            if node.value is not None
-            else (r"\State \Return" if not self._ipython else r"\mathbf{return}")
-        )
+        value = self.visit(node.value) if node.value is not None else None
+        return self.add_indent(self._return(value))
+
+    @abstractmethod
+    def _return(self, value_latex: str | None) -> str:
+        """Return statement."""
 
     def visit_While(self, node: ast.While) -> str:
         """Visit a While node."""
         if node.orelse:
-            raise exceptions.LatexifyNotSupportedError("While statement with the else clause is not supported")
+            raise LatexifyNotSupportedError("While statement with the else clause is not supported")
         block = IndentedBlock(self)
-        block.add(
-            f"\\While{{${self._expr(node.test)}$}}"
-            if not self._ipython
-            else r"\mathbf{while} \ " + self._expr(node.test)
-        )
+        block.add(self._begin_while(self.visit(node.test)))
         with self._increment_level():
-            block.extend(node.body)
-        block.add(r"\EndWhile" if not self._ipython else r"\mathbf{end \ while}")
+            block.add(node.body)
+        block.add(self._end_while())
         return str(block)
+
+    @abstractmethod
+    def _begin_while(self, cond_latex: str) -> str:
+        """Begin a While loop."""
+
+    @abstractmethod
+    def _end_while(self) -> str:
+        """End a While loop."""
 
     def visit_Pass(self, _node: ast.Pass) -> str:
         """Visit a Pass node."""
-        return self._state(r"\mathbf{pass}")
+        return self._statement(r"\mathbf{pass}")
 
     def visit_Break(self, _node: ast.Break) -> str:
         """Visit a Break node."""
-        return self._state(r"\mathbf{break}")
+        return self._statement(r"\mathbf{break}")
 
     def visit_Continue(self, _node: ast.Continue) -> str:
         """Visit a Continue node."""
-        return self._state(r"\mathbf{continue}")
+        return self._statement(r"\mathbf{continue}")
 
     @contextlib.contextmanager
     def _increment_level(self) -> Generator[None, None, None]:
@@ -205,16 +183,109 @@ class AlgorithmicCodegen(ast.NodeVisitor):
         yield
         self._indent_level -= 1
 
+    @abstractmethod
     def add_indent(self, line: str) -> str:
         """Adds an indent before the line.
 
         Args:
             line: The line to add an indent to.
         """
-        if self._ipython:
-            return rf"\hspace{{{self._indent_level * self.EM_PER_INDENT}em}} {line}" if self._indent_level > 0 else line
-        else:
-            return self._indent_level * self.SPACES_PER_INDENT * " " + line
+
+
+class AlgorithmicCodegen(AlgorithmicCodegen):
+    SPACES_PER_INDENT = 4
+    LINE_BREAK = "\n"
+
+    def _statement(self, line):
+        return self.add_indent(rf"\State ${line}$")
+
+    def _begin_for(self, target_latex, iter_latex):
+        return f"\\For{{${target_latex} \\in {iter_latex}$}}"
+
+    def _end_for(self):
+        return r"\EndFor"
+
+    def _if(self, cond_latex: str):
+        return r"\If{$" + cond_latex + r"$}"
+
+    def _elif(self, cond_latex: str):
+        return r"\ElsIf{$" + cond_latex + r"$}"
+
+    def _else(self):
+        return r"\Else"
+
+    def _begin_function(self, name_latex: str, arg_latex: str, top: bool):
+        if top:
+            yield r"\begin{algorithmic}"
+        self._indent_level += 1
+        yield r"\Function{" + name_latex + r"}{$" + arg_latex + r"$}"
+
+    def _end_function(self, top):
+        yield r"\EndFunction"
+        self._indent_level -= 1
+        if top:
+            yield r"\end{algorithmic}"
+
+    def _end_if(self):
+        return r"\EndIf"
+
+    def _begin_while(self, cond_latex: str):
+        return r"\While{$" + cond_latex + r"$}"
+
+    def _end_while(self):
+        return r"\EndWhile"
+
+    def _return(self, value_latex):
+        return r"\State \Return " + f"${value_latex}$" if value_latex is not None else r"\State \Return"
+
+    def add_indent(self, line):
+        return self._indent_level * self.SPACES_PER_INDENT * " " + line
+
+
+class IPythonLatexifier(AlgorithmicCodegen):
+    EM_PER_INDENT = 1
+    LINE_BREAK = r" \\ "
+
+    def _statement(self, line):
+        return self.add_indent(line)
+
+    def _begin_for(self, target_latex: str, iter_latex: str):
+        return r"\mathbf{for} \ " + target_latex + r" \in " + iter_latex + r" \ \mathbf{do}"
+
+    def _end_for(self):
+        return r"\mathbf{end \ for}"
+
+    def _if(self, cond_latex: str):
+        return r"\mathbf{if} \ " + cond_latex
+
+    def _elif(self, cond_latex: str):
+        return r"\mathbf{else if} \ " + cond_latex
+
+    def _else(self):
+        return r"\mathbf{else}"
+
+    def _begin_function(self, name_latex: str, arg_latex: str, top: bool):
+        s = r"\begin{array}{l} " if top else ""
+        return s + r"\mathbf{function} \ " + f"{self.visit(name_latex)}({arg_latex})"
+
+    def _end_function(self, top):
+        s = r"\mathbf{end \ function}"
+        return s + r" \end{array}" if top else s
+
+    def _end_if(self):
+        return r"\mathbf{end \ if}"
+
+    def _begin_while(self, cond_latex):
+        return r"\mathbf{while} \ " + cond_latex
+
+    def _end_while(self):
+        return r"\mathbf{end \ while}"
+
+    def _return(self, value_latex: str | None):
+        return r"\mathbf{return} \ " + value_latex if value_latex is not None else r"\mathbf{return}"
+
+    def add_indent(self, line):
+        return rf"\hspace{{{self._indent_level * self.EM_PER_INDENT}em}} {line}" if self._indent_level > 0 else line
 
 
 class IndentedBlock:
@@ -225,14 +296,13 @@ class IndentedBlock:
         self._items = []
         self._visitor = visitor
 
-    def add(self, item: str | ast.AST) -> None:
-        self._items.append(self._fmt(item))
-
-    def extend(self, items: Iterable[str | ast.AST]) -> None:
-        self._items.extend(map(self._fmt, items))
-
-    def _fmt(self, item: str | ast.AST) -> str:
-        return self._visitor.add_indent(item) if isinstance(item, str) else self._visitor.visit(item)
+    def add(self, item: str | ast.AST | Iterable[str | ast.AST]) -> None:
+        if isinstance(item, (ast.AST, str)):
+            latex = self._visitor.add_indent(item) if isinstance(item, str) else self._visitor.visit(item)
+            self._items.append(latex)
+        else:
+            for sub_item in item:
+                self.add(sub_item)
 
     def __str__(self) -> str:
         return self._visitor.LINE_BREAK.join(self._items)

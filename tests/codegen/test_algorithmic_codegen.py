@@ -4,10 +4,24 @@ from __future__ import annotations
 
 import ast
 import textwrap
+from functools import partial
 
 import pytest
 from latexify import exceptions
-from latexify.codegen.algorithmic_codegen import AlgorithmicCodegen
+from latexify.codegen.algorithmic_codegen import AlgorithmicCodegen, IPythonLatexifier
+from latexify.codegen.plugin_stack import default_stack
+
+from tests.utils import assert_latex_equal as assert_latex_equal_
+
+visitor = default_stack(AlgorithmicCodegen())
+assert_latex_equal = partial(
+    assert_latex_equal_,
+    visitor,
+)
+
+ipython_visitor = default_stack(IPythonLatexifier())
+assert_latex_equal_ipython = partial(assert_latex_equal_, ipython_visitor)
+
 
 
 def test_generic_visit() -> None:
@@ -18,7 +32,7 @@ def test_generic_visit() -> None:
         exceptions.LatexifyNotSupportedError,
         match=r"^Unsupported AST: UnknownNode$",
     ):
-        AlgorithmicCodegen().visit(UnknownNode())
+        visitor.visit(UnknownNode())
 
 
 @pytest.mark.parametrize(
@@ -35,9 +49,7 @@ def test_generic_visit() -> None:
     ],
 )
 def test_visit_assign(code: str, latex: str) -> None:
-    node = ast.parse(textwrap.dedent(code)).body[0]
-    assert isinstance(node, ast.Assign)
-    assert AlgorithmicCodegen().visit(node) == latex
+    assert_latex_equal(code, ast.Assign, latex)
 
 
 @pytest.mark.parametrize(
@@ -54,9 +66,7 @@ def test_visit_assign(code: str, latex: str) -> None:
     ],
 )
 def test_visit_for(code: str, latex: str) -> None:
-    node = ast.parse(textwrap.dedent(code)).body[0]
-    assert isinstance(node, ast.For)
-    assert AlgorithmicCodegen().visit(node) == textwrap.dedent(latex).strip()
+    assert_latex_equal(code, ast.For, latex)
 
 
 @pytest.mark.parametrize(
@@ -85,9 +95,7 @@ def test_visit_for(code: str, latex: str) -> None:
     ],
 )
 def test_visit_functiondef(code: str, latex: str) -> None:
-    node = ast.parse(textwrap.dedent(code)).body[0]
-    assert isinstance(node, ast.FunctionDef)
-    assert AlgorithmicCodegen().visit(node) == textwrap.dedent(latex).strip()
+    assert_latex_equal(code, ast.FunctionDef, latex)
 
 
 @pytest.mark.parametrize(
@@ -114,9 +122,7 @@ def test_visit_functiondef(code: str, latex: str) -> None:
     ],
 )
 def test_visit_if(code: str, latex: str) -> None:
-    node = ast.parse(code).body[0]
-    assert isinstance(node, ast.If)
-    assert AlgorithmicCodegen().visit(node) == textwrap.dedent(latex).strip()
+    assert_latex_equal(code, ast.If, latex)
 
 
 @pytest.mark.parametrize(
@@ -211,9 +217,7 @@ def test_visit_if(code: str, latex: str) -> None:
     ],
 )
 def test_visit_elif(code: str, latex: str) -> None:
-    node = ast.parse(textwrap.dedent(code)).body[0]
-    assert isinstance(node, ast.If)
-    assert AlgorithmicCodegen().visit(node) == textwrap.dedent(latex).strip()
+    assert_latex_equal(code, ast.If, latex)
 
 
 @pytest.mark.parametrize(
@@ -230,9 +234,7 @@ def test_visit_elif(code: str, latex: str) -> None:
     ],
 )
 def test_visit_return(code: str, latex: str) -> None:
-    node = ast.parse(code).body[0]
-    assert isinstance(node, ast.Return)
-    assert AlgorithmicCodegen().visit(node) == latex
+    assert_latex_equal(code, ast.Return, latex)
 
 
 @pytest.mark.parametrize(
@@ -249,9 +251,7 @@ def test_visit_return(code: str, latex: str) -> None:
     ],
 )
 def test_visit_while(code: str, latex: str) -> None:
-    node = ast.parse(code).body[0]
-    assert isinstance(node, ast.While)
-    assert AlgorithmicCodegen().visit(node) == textwrap.dedent(latex).strip()
+    assert_latex_equal(code, ast.While, latex)
 
 
 def test_visit_while_with_else() -> None:
@@ -270,25 +270,19 @@ def test_visit_while_with_else() -> None:
         exceptions.LatexifyNotSupportedError,
         match="^While statement with the else clause is not supported$",
     ):
-        AlgorithmicCodegen().visit(node)
+        visitor.visit(node)
 
 
 def test_visit_pass() -> None:
-    node = ast.parse("pass").body[0]
-    assert isinstance(node, ast.Pass)
-    assert AlgorithmicCodegen().visit(node) == r"\State $\mathbf{pass}$"
+    assert_latex_equal("pass", ast.Pass, r"\State $\mathbf{pass}$")
 
 
 def test_visit_break() -> None:
-    node = ast.parse("break").body[0]
-    assert isinstance(node, ast.Break)
-    assert AlgorithmicCodegen().visit(node) == r"\State $\mathbf{break}$"
+    assert_latex_equal("break", ast.Break, r"\State $\mathbf{break}$")
 
 
 def test_visit_continue() -> None:
-    node = ast.parse("continue").body[0]
-    assert isinstance(node, ast.Continue)
-    assert AlgorithmicCodegen().visit(node) == r"\State $\mathbf{continue}$"
+    assert_latex_equal("continue", ast.Continue, r"\State $\mathbf{continue}$")
 
 
 @pytest.mark.parametrize(
@@ -299,9 +293,7 @@ def test_visit_continue() -> None:
     ],
 )
 def test_visit_assign_ipython(code: str, latex: str) -> None:
-    node = ast.parse(textwrap.dedent(code)).body[0]
-    assert isinstance(node, ast.Assign)
-    assert AlgorithmicCodegen(ipython=True).visit(node) == latex
+    assert_latex_equal_ipython(code, ast.Assign, latex)
 
 
 @pytest.mark.parametrize(
@@ -319,9 +311,7 @@ def test_visit_assign_ipython(code: str, latex: str) -> None:
     ],
 )
 def test_visit_for_ipython(code: str, latex: str) -> None:
-    node = ast.parse(textwrap.dedent(code)).body[0]
-    assert isinstance(node, ast.For)
-    assert AlgorithmicCodegen(ipython=True).visit(node) == textwrap.dedent(latex).strip()
+    assert_latex_equal_ipython(code, ast.For, latex)
 
 
 @pytest.mark.parametrize(
@@ -352,9 +342,7 @@ def test_visit_for_ipython(code: str, latex: str) -> None:
     ],
 )
 def test_visit_functiondef_ipython(code: str, latex: str) -> None:
-    node = ast.parse(textwrap.dedent(code)).body[0]
-    assert isinstance(node, ast.FunctionDef)
-    assert AlgorithmicCodegen(ipython=True).visit(node) == latex
+    assert_latex_equal_ipython(code, ast.FunctionDef, latex)
 
 
 @pytest.mark.parametrize(
@@ -377,9 +365,7 @@ def test_visit_functiondef_ipython(code: str, latex: str) -> None:
     ],
 )
 def test_visit_if_ipython(code: str, latex: str) -> None:
-    node = ast.parse(textwrap.dedent(code)).body[0]
-    assert isinstance(node, ast.If)
-    assert AlgorithmicCodegen(ipython=True).visit(node) == latex
+    assert_latex_equal_ipython(code, ast.If, latex)
 
 
 @pytest.mark.parametrize(
@@ -396,9 +382,7 @@ def test_visit_if_ipython(code: str, latex: str) -> None:
     ],
 )
 def test_visit_return_ipython(code: str, latex: str) -> None:
-    node = ast.parse(textwrap.dedent(code)).body[0]
-    assert isinstance(node, ast.Return)
-    assert AlgorithmicCodegen(ipython=True).visit(node) == latex
+    assert_latex_equal_ipython(code, ast.Return, latex)
 
 
 @pytest.mark.parametrize(
@@ -411,9 +395,7 @@ def test_visit_return_ipython(code: str, latex: str) -> None:
     ],
 )
 def test_visit_while_ipython(code: str, latex: str) -> None:
-    node = ast.parse(textwrap.dedent(code)).body[0]
-    assert isinstance(node, ast.While)
-    assert AlgorithmicCodegen(ipython=True).visit(node) == latex
+    assert_latex_equal_ipython(code, ast.While, latex)
 
 
 def test_visit_while_with_else_ipython() -> None:
@@ -432,22 +414,17 @@ def test_visit_while_with_else_ipython() -> None:
         exceptions.LatexifyNotSupportedError,
         match="^While statement with the else clause is not supported$",
     ):
-        AlgorithmicCodegen(ipython=True).visit(node)
+        ipython_visitor.visit(node)
 
 
 def test_visit_pass_ipython() -> None:
-    node = ast.parse("pass").body[0]
-    assert isinstance(node, ast.Pass)
-    assert AlgorithmicCodegen(ipython=True).visit(node) == r"\mathbf{pass}"
+    assert_latex_equal_ipython("pass", ast.Pass, r"\mathbf{pass}")
 
 
 def test_visit_break_ipython() -> None:
-    node = ast.parse("break").body[0]
-    assert isinstance(node, ast.Break)
-    assert AlgorithmicCodegen(ipython=True).visit(node) == r"\mathbf{break}"
+    assert_latex_equal_ipython("break", ast.Break, r"\mathbf{break}")
 
 
 def test_visit_continue_ipython() -> None:
-    node = ast.parse("continue").body[0]
-    assert isinstance(node, ast.Continue)
-    assert AlgorithmicCodegen(ipython=True).visit(node) == r"\mathbf{continue}"
+    assert_latex_equal_ipython("continue", ast.Continue, r"\mathbf{continue}")
+

@@ -17,6 +17,12 @@ class PrefixTrimmer(ast.NodeTransformer):
     the attribute matches the given set of prefixes.
     Prefix is searched in the manner of leftmost longest matching.
 
+    Args:
+        prefixes: Set of prefixes to be trimmed. Nested prefix is allowed too.
+            Each value must follow one of the following formats:
+            - A Python identifier, e.g., "math"
+            - Python identifiers joined by periods, e.g., "numpy.random"
+
     Example:
         def f(x):
             return math.sqrt(x)
@@ -30,14 +36,6 @@ class PrefixTrimmer(ast.NodeTransformer):
     _prefixes: list[tuple[str, ...]]
 
     def __init__(self, prefixes: set[str]) -> None:
-        """Initializer.
-
-        Args:
-            prefixes: Set of prefixes to be trimmed. Nested prefix is allowed too.
-                Each value must follow one of the following formats:
-                - A Python identifier, e.g., "math"
-                - Python identifiers joined by periods, e.g., "numpy.random"
-        """
         for p in prefixes:
             if not _PREFIX_PATTERN.match(p):
                 raise ValueError(f"Invalid prefix: {p}")

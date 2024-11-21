@@ -1,22 +1,22 @@
-"""Wrapper objects for IPython to display output."""
-
 from __future__ import annotations
 
-from abc import ABCMeta, abstractmethod
-from typing import Any, Callable, cast
-from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
-from latexify import generate_latex
-from latexify.exceptions import LatexifyError
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
-class LatexifiedRepr(metaclass=ABCMeta):
+class LatexifyWrapper:
     """Object with LaTeX representation."""
 
     _fn: Callable[..., Any]
+    _str: str
+    _latex: str
 
-    def __init__(self, fn: Callable[..., Any], **_kwargs) -> None:
+    def __init__(self, fn: Callable[..., Any], s: str, latex: str) -> None:
         self._fn = fn
+        self._str = s
+        self._latex = latex
 
     @property
     def __doc__(self) -> str | None:
@@ -34,80 +34,15 @@ class LatexifiedRepr(metaclass=ABCMeta):
     def __name__(self, val: str) -> None:
         self._fn.__name__ = val
 
-    # After Python 3.7
-    # @final
     def __call__(self, *args, **kwargs) -> Any:
         return self._fn(*args, **kwargs)
 
-    @abstractmethod
-    def __str__(self) -> str: ...
+    def __str__(self) -> str:
+        return self._str
 
-    @abstractmethod
     def _repr_latex_(self) -> str:
         """IPython hook to display LaTeX visualization.
 
         See https://ipython.readthedocs.io/en/stable/config/integrating.html
         """
-
-
-class LatexifiedAlgorithm(LatexifiedRepr):
-    """Algorithm with latex representation.
-
-    IPython does not come with the `algpseudocode` LaTeX package,
-    so we provide an alternative _ipython_latex representation.
-    """
-
-    _latex: str | LatexifyError
-    _ipython_latex: str | LatexifyError
-
-    def __init__(self, fn: Callable[..., Any], to_file: str | bool = False, **kwargs) -> None:
-        """Initializer.
-
-        Args:
-            fn: Callable to be wrapped.
-            **kwargs: Arguments to control behavior. See also get_latex().
-        """
-        super().__init__(fn)
-
-        try:
-            self._latex = generate_latex.get_latex(fn, style=generate_latex.Style.ALGORITHMIC, **kwargs)
-        except LatexifyError as e:
-            self._latex = e
-
-        try:
-            self._ipython_latex = generate_latex.get_latex(fn, style=generate_latex.Style.IPYTHON_ALGORITHMIC, **kwargs)
-        except LatexifyError as e:
-            self._ipython_latex = e
-        
-        if to_file and isinstance(self._latex, str):
-            path = Path(to_file) if isinstance(to_file, str) else Path(f"{self.__name__}.tex")
-            if path.is_dir():
-                path = path / f"{self.__name__}.tex"
-            path.write_text(self._latex)
-
-    def __str__(self) -> str:
-        return self._latex if isinstance(self._latex, str) else self._latex.describe()
-
-    def _repr_latex_(self) -> str:
-        return f"$ {self._ipython_latex} $" if isinstance(self._ipython_latex, str) else self._ipython_latex.describe()
-
-
-class LatexifiedFunction(LatexifiedRepr):
-    """Function with latex representation."""
-
-    _latex: str | LatexifyError
-
-    def __init__(self, fn: Callable[..., Any], **kwargs) -> None:
-        super().__init__(fn, **kwargs)
-
-        try:
-            self._latex = generate_latex.get_latex(fn, style=generate_latex.Style.FUNCTION, **kwargs)
-        except LatexifyError as e:
-            self._latex = e
-
-    def __str__(self) -> str:
-        return self._latex if isinstance(self._latex, str) else cast(str, self._error)
-
-    def _repr_latex_(self) -> str:
-        """IPython hook to display LaTeX visualization."""
-        return rf"$$ \displaystyle {self._latex} $$" if isinstance(self._latex, str) else self._latex.describe()
+        return self._latex

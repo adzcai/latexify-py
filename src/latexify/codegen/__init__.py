@@ -7,5 +7,5 @@ from latexify.codegen import (
 )
 
 AlgorithmicCodegen = algorithmic_codegen.AlgorithmicCodegen
-ExpressionCodegen = expression_codegen.ExpressionCodegen
+ExpressionCodegen = expression_codegen.ExpressionVisitor
 FunctionCodegen = function_codegen.FunctionCodegen

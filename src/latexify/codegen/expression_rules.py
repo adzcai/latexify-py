@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import ast
-import dataclasses
+import functools
+from dataclasses import dataclass, field
 
 # Precedences of operators for BoolOp, BinOp, UnaryOp, and Compare nodes.
 # Note that this value affects only the appearance of surrounding parentheses for each
@@ -82,20 +83,22 @@ def get_precedence(node: ast.AST) -> int:
     return _INF_PRECEDENCE
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclass(frozen=True)
 class BinOperandRule:
-    """Syntax rules for operands of BinOp."""
+    """
+    A class to define rules for binary operands.
 
-    # Whether to require wrapping operands by parentheses according to the precedence.
+    Attributes:
+        wrap (bool): Whether to require wrapping operands by parentheses according to the precedence.
+        force (bool): Whether to require wrapping operands by parentheses if the operand has the same
+            precedence with this operator. This is used to control the behavior of non-associative operators.
+    """
+
     wrap: bool = True
-
-    # Whether to require wrapping operands by parentheses if the operand has the same
-    # precedence with this operator.
-    # This is used to control the behavior of non-associative operators.
     force: bool = False
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclass(frozen=True)
 class BinOpRule:
     """Syntax rules for BinOp."""
 
@@ -105,8 +108,8 @@ class BinOpRule:
     latex_right: str
 
     # Operand rules.
-    operand_left: BinOperandRule = dataclasses.field(default_factory=BinOperandRule)
-    operand_right: BinOperandRule = dataclasses.field(default_factory=BinOperandRule)
+    operand_left: BinOperandRule = field(default_factory=BinOperandRule)
+    operand_right: BinOperandRule = field(default_factory=BinOperandRule)
 
     # Whether to assume the resulting syntax is wrapped by some bracket operators.
     # If True, the parent operator can avoid wrapping this operator by parentheses.
@@ -192,7 +195,7 @@ BOOL_OPS: dict[type[ast.boolop], str] = {
 }
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclass(frozen=True)
 class FunctionRule:
     """Codegen rules for functions.
 
@@ -209,102 +212,56 @@ class FunctionRule:
     is_wrapped: bool = False
 
 
+_UnaryRule = functools.partial(FunctionRule, is_unary=True)
+
+_WrappedRule = functools.partial(FunctionRule, is_wrapped=True)
+
+
+# from the builtin math package
 # name => left_syntax, right_syntax, is_wrapped
 BUILTIN_FUNCS: dict[str, FunctionRule] = {
-    "abs": FunctionRule(r"\mathopen{}\left|", r"\mathclose{}\right|", is_wrapped=True),
-    "acos": FunctionRule(r"\arccos", is_unary=True),
-    "acosh": FunctionRule(r"\mathrm{arcosh}", is_unary=True),
-    "arccos": FunctionRule(r"\arccos", is_unary=True),
-    "arccot": FunctionRule(r"\mathrm{arccot}", is_unary=True),
-    "arccsc": FunctionRule(r"\mathrm{arccsc}", is_unary=True),
-    "arcosh": FunctionRule(r"\mathrm{arcosh}", is_unary=True),
-    "arcoth": FunctionRule(r"\mathrm{arcoth}", is_unary=True),
-    "arcsec": FunctionRule(r"\mathrm{arcsec}", is_unary=True),
-    "arcsch": FunctionRule(r"\mathrm{arcsch}", is_unary=True),
-    "arcsin": FunctionRule(r"\arcsin", is_unary=True),
-    "arctan": FunctionRule(r"\arctan", is_unary=True),
-    "arsech": FunctionRule(r"\mathrm{arsech}", is_unary=True),
-    "arsinh": FunctionRule(r"\mathrm{arsinh}", is_unary=True),
-    "artanh": FunctionRule(r"\mathrm{artanh}", is_unary=True),
-    "asin": FunctionRule(r"\arcsin", is_unary=True),
-    "asinh": FunctionRule(r"\mathrm{arsinh}", is_unary=True),
-    "atan": FunctionRule(r"\arctan", is_unary=True),
-    "atanh": FunctionRule(r"\mathrm{artanh}", is_unary=True),
-    "ceil": FunctionRule(r"\mathopen{}\left\lceil", r"\mathclose{}\right\rceil", is_wrapped=True),
-    "cos": FunctionRule(r"\cos", is_unary=True),
-    "cosh": FunctionRule(r"\cosh", is_unary=True),
-    "cot": FunctionRule(r"\cot", is_unary=True),
-    "coth": FunctionRule(r"\coth", is_unary=True),
-    "csc": FunctionRule(r"\csc", is_unary=True),
-    "csch": FunctionRule(r"\mathrm{csch}", is_unary=True),
-    "exp": FunctionRule(r"\exp", is_unary=True),
-    "fabs": FunctionRule(r"\mathopen{}\left|", r"\mathclose{}\right|", is_wrapped=True),
-    "factorial": FunctionRule("", "!", is_unary=True),
-    "floor": FunctionRule(r"\mathopen{}\left\lfloor", r"\mathclose{}\right\rfloor", is_wrapped=True),
-    "fsum": FunctionRule(r"\sum", is_unary=True),
-    "gamma": FunctionRule(r"\Gamma"),
-    "log": FunctionRule(r"\log", is_unary=True),
-    "log10": FunctionRule(r"\log_{10}", is_unary=True),
-    "log2": FunctionRule(r"\log_2", is_unary=True),
-    "prod": FunctionRule(r"\prod", is_unary=True),
-    "sec": FunctionRule(r"\sec", is_unary=True),
-    "sech": FunctionRule(r"\mathrm{sech}", is_unary=True),
-    "sin": FunctionRule(r"\sin", is_unary=True),
-    "sinh": FunctionRule(r"\sinh", is_unary=True),
-    "sqrt": FunctionRule(r"\sqrt{", "}", is_wrapped=True),
-    "sum": FunctionRule(r"\sum", is_unary=True),
-    "tan": FunctionRule(r"\tan", is_unary=True),
-    "tanh": FunctionRule(r"\tanh", is_unary=True),
-}
-
-MATH_SYMBOLS = {
-    "aleph",
-    "alpha",
-    "beta",
-    "beth",
-    "chi",
-    "daleth",
-    "delta",
-    "digamma",
-    "epsilon",
-    "eta",
-    "gamma",
-    "gimel",
-    "hbar",
-    "infty",
-    "iota",
-    "kappa",
-    "lambda",
-    "mu",
-    "nabla",
-    "nu",
-    "omega",
-    "phi",
-    "pi",
-    "psi",
-    "rho",
-    "sigma",
-    "tau",
-    "theta",
-    "upsilon",
-    "varepsilon",
-    "varkappa",
-    "varphi",
-    "varpi",
-    "varrho",
-    "varsigma",
-    "vartheta",
-    "xi",
-    "zeta",
-    "Delta",
-    "Gamma",
-    "Lambda",
-    "Omega",
-    "Phi",
-    "Pi",
-    "Psi",
-    "Sigma",
-    "Theta",
-    "Upsilon",
-    "Xi",
+    "abs": _WrappedRule(r"\mathopen{}\left|", r"\mathclose{}\right|"),
+    "acos": _UnaryRule(r"\arccos"),
+    "acosh": _UnaryRule(r"\mathrm{arcosh}"),
+    "arccos": _UnaryRule(r"\arccos"),
+    "arccot": _UnaryRule(r"\mathrm{arccot}"),
+    "arccsc": _UnaryRule(r"\mathrm{arccsc}"),
+    "arcosh": _UnaryRule(r"\mathrm{arcosh}"),
+    "arcoth": _UnaryRule(r"\mathrm{arcoth}"),
+    "arcsec": _UnaryRule(r"\mathrm{arcsec}"),
+    "arcsch": _UnaryRule(r"\mathrm{arcsch}"),
+    "arcsin": _UnaryRule(r"\arcsin"),
+    "arctan": _UnaryRule(r"\arctan"),
+    "arsech": _UnaryRule(r"\mathrm{arsech}"),
+    "arsinh": _UnaryRule(r"\mathrm{arsinh}"),
+    "artanh": _UnaryRule(r"\mathrm{artanh}"),
+    "asin": _UnaryRule(r"\arcsin"),
+    "asinh": _UnaryRule(r"\mathrm{arsinh}"),
+    "atan": _UnaryRule(r"\arctan"),
+    "atanh": _UnaryRule(r"\mathrm{artanh}"),
+    "ceil": _WrappedRule(r"\mathopen{}\left\lceil", r"\mathclose{}\right\rceil"),
+    "cos": _UnaryRule(r"\cos"),
+    "cosh": _UnaryRule(r"\cosh"),
+    "cot": _UnaryRule(r"\cot"),
+    "coth": _UnaryRule(r"\coth"),
+    "csc": _UnaryRule(r"\csc"),
+    "csch": _UnaryRule(r"\mathrm{csch}"),
+    "exp": _UnaryRule(r"\exp"),
+    "fabs": _WrappedRule(r"\mathopen{}\left|", r"\mathclose{}\right|"),
+    "factorial": _UnaryRule("", right="!"),
+    "floor": _WrappedRule(r"\mathopen{}\left\lfloor", r"\mathclose{}\right\rfloor"),
+    "fsum": _UnaryRule(r"\sum"),
+    "gamma": _UnaryRule(r"\Gamma"),
+    "log": _UnaryRule(r"\log"),
+    "log10": _UnaryRule(r"\log_{10}"),
+    "log2": _UnaryRule(r"\log_2"),
+    "prod": _UnaryRule(r"\prod"),
+    "sec": _UnaryRule(r"\sec"),
+    "sech": _UnaryRule(r"\mathrm{sech}"),
+    "sin": _UnaryRule(r"\sin"),
+    "sinh": _UnaryRule(r"\sinh"),
+    "sqrt": _WrappedRule(r"\sqrt{", "}"),
+    "sum": _UnaryRule(r"\sum"),
+    "tan": _UnaryRule(r"\tan"),
+    "tanh": _UnaryRule(r"\tanh"),
 }

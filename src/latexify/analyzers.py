@@ -6,7 +6,8 @@ import ast
 import dataclasses
 import sys
 
-from latexify import ast_utils, exceptions
+from latexify import ast_utils
+from latexify.exceptions import LatexifySyntaxError
 
 
 @dataclasses.dataclass(frozen=True, eq=False)
@@ -38,7 +39,7 @@ def analyze_range(node: ast.Call) -> RangeInfo:
         LatexifySyntaxError: Analysis failed.
     """
     if not (isinstance(node.func, ast.Name) and node.func.id == "range" and 1 <= len(node.args) <= 3):
-        raise exceptions.LatexifySyntaxError("Unsupported AST for analyze_range.")
+        raise LatexifySyntaxError("Unsupported AST for analyze_range.")
 
     num_args = len(node.args)
 

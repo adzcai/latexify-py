@@ -45,8 +45,7 @@ def parse_function(fn: Callable[..., Any]) -> ast.Module:
 
     # Remove extra indentation so that ast.parse runs correctly.
     source = textwrap.dedent(source)
-
-    tree = ast.parse(source, type_comments=True)
+    tree = ast.parse(source)
     if not tree.body or not isinstance(tree.body[0], ast.FunctionDef):
         raise LatexifySyntaxError("Not a function.")
 

@@ -25,8 +25,10 @@ from latexify.codegen.identifier_converter import IdentifierConverter
         ("foo", False, True, (r"\mathrm{foo}", False)),
         ("foo", True, True, (r"\mathrm{foo}", False)),
         ("foo", True, False, (r"foo", False)),
-        # ("alpha_1", False, True, (r"\mathrm{alpha\_1}", False)),
+        ("alpha_1", False, True, (r"\mathrm{alpha\_1}", False)),
     ],
 )
 def test_identifier_converter(name: str, use_math_symbols: bool, use_mathrm: bool, expected: tuple[str, bool]) -> None:
-    assert IdentifierConverter(use_math_symbols=use_math_symbols, use_mathrm=use_mathrm).convert(name) == expected
+    assert (
+        IdentifierConverter(use_math_symbols=use_math_symbols, use_mathrm=use_mathrm).convert_identifier(name) == expected
+    )

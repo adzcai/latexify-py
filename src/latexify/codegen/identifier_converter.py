@@ -1,54 +1,93 @@
-"""Utility to convert identifiers."""
-
 from __future__ import annotations
 
-from latexify.codegen.expression_rules import MATH_SYMBOLS
+from latexify.codegen.plugin import Plugin
 
 
-class IdentifierConverter:
-    r"""Converts Python identifiers (e.g. variable names) to appropriate LaTeX expression.
+class IdentifierConverter(Plugin):
+    def __init__(
+        self,
+        use_math_symbols: bool | None = None,
+        use_mathrm: bool | None = None,
+    ):
+        self._use_math_symbols = False if use_math_symbols is None else use_math_symbols
+        self._use_mathrm = True if use_mathrm is None else use_mathrm
 
-    This converter applies following rules:
-        - `foo` --> `\foo`, if `use_math_symbols == True` and the given identifier
-          matches a supported math symbol name.
-        - `x` --> `x`, if the given identifier is exactly 1 character (except `_`)
-        - `foo_bar` --> `\mathrm{foo\_bar}`, otherwise.
-    """
+    def visit_str(self, name: str) -> str:
+        return self.convert_identifier(name)[0]
 
-    _use_math_symbols: bool
-    _use_mathrm: bool
-
-    def __init__(self, *, use_math_symbols: bool, use_mathrm: bool = True) -> None:
-        r"""Initializer.
-
-        Args:
-            use_math_symbols: Whether to convert identifiers with math symbol names to
-                appropriate LaTeX command.
-            use_mathrm: Whether to wrap the resulting expression by \mathrm, if
-                applicable.
-        """
-        self._use_math_symbols = use_math_symbols
-        self._use_mathrm = use_mathrm
-
-    def convert(self, name: str) -> tuple[str, bool]:
-        """Converts Python identifier to LaTeX expression.
-
-        Args:
-            name: Identifier name.
-
-        Returns:
-            Tuple of following values:
-                - latex: Corresponding LaTeX expression.
-                - is_single_character: Whether `latex` can be treated as a single
-                    character or not.
-        """
+    def convert_identifier(self, name: str) -> str:
+        r"""Converts Python identifiers (e.g. variable names) to appropriate LaTeX expression."""
         if self._use_math_symbols and name in MATH_SYMBOLS:
             return "\\" + name, True
 
         if len(name) == 1 and name != "_":
             return name, True
 
-        escaped = name.replace("_", r"\_")
-        wrapped = rf"\mathrm{{{escaped}}}" if self._use_mathrm else escaped
+        parts = name.split("_")
+        if (
+            self._use_math_symbols
+            and len(parts) == 2
+            and (parts[0] in MATH_SYMBOLS or len(parts[0]) == 1)
+            and parts[1] != ""
+        ):
+            first = ("" if len(parts[0]) == 1 else "\\") + parts[0]
+            if parts[1] == "hat":
+                return r"\widehat{" + first + r"}", False
+            return first + r"_{\mathrm{" + parts[1] + r"}}", False
 
-        return wrapped, False
+        escaped = name.replace("_", r"\_")
+
+        return r"\mathrm{" + escaped + r"}" if self._use_mathrm else escaped, False
+
+
+MATH_SYMBOLS = {
+    "aleph",
+    "alpha",
+    "beta",
+    "beth",
+    "chi",
+    "daleth",
+    "delta",
+    "digamma",
+    "epsilon",
+    "eta",
+    "gamma",
+    "gimel",
+    "hbar",
+    "infty",
+    "iota",
+    "kappa",
+    "lambda",
+    "mu",
+    "nabla",
+    "nu",
+    "omega",
+    "phi",
+    "pi",
+    "psi",
+    "rho",
+    "sigma",
+    "tau",
+    "theta",
+    "upsilon",
+    "varepsilon",
+    "varkappa",
+    "varphi",
+    "varpi",
+    "varrho",
+    "varsigma",
+    "vartheta",
+    "xi",
+    "zeta",
+    "Delta",
+    "Gamma",
+    "Lambda",
+    "Omega",
+    "Phi",
+    "Pi",
+    "Psi",
+    "Sigma",
+    "Theta",
+    "Upsilon",
+    "Xi",
+}

@@ -12,9 +12,6 @@ class LatexifyError(Exception):
     Errors caused by wrong inputs should raise built-in exceptions.
     """
 
-    def describe(self):
-        return f"{self.__class__.__name__}: {self!s}"
-
 
 class LatexifyNotSupportedError(LatexifyError):
     """Some subtree in the AST is not supported by the current implementation.

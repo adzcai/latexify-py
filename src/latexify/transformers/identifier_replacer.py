@@ -13,6 +13,12 @@ class IdentifierReplacer(ast.NodeTransformer):
 
     This class defines a rule to replace identifiers in AST with specified names.
 
+    Args:
+        mapping: User defined mapping of names. Keys are the original names of the
+            identifiers, and corresponding values are the replacements.
+            Both keys and values have to represent valid Python identifiers:
+            ^[A-Za-z_][A-Za-z0-9_]*$
+
     Example:
         def foo(bar):
             return baz
@@ -25,14 +31,6 @@ class IdentifierReplacer(ast.NodeTransformer):
     """
 
     def __init__(self, mapping: dict[str, str]):
-        """Initializer.
-
-        Args:
-            mapping: User defined mapping of names. Keys are the original names of the
-                identifiers, and corresponding values are the replacements.
-                Both keys and values have to represent valid Python identifiers:
-                ^[A-Za-z_][A-Za-z0-9_]*$
-        """
         self._mapping = mapping
 
         for k, v in self._mapping.items():
@@ -47,7 +45,7 @@ class IdentifierReplacer(ast.NodeTransformer):
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.FunctionDef:
         """Visit a FunctionDef node."""
-        visited = cast(ast.FunctionDef, super().generic_visit(node))
+        visited = cast(ast.FunctionDef, self.generic_visit(node))
 
         if sys.version_info < (3, 8):
             args = ast.arguments(

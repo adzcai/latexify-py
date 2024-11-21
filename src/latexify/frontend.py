@@ -2,27 +2,34 @@
 
 from __future__ import annotations
 
+from functools import partial
 from typing import TYPE_CHECKING, Any, overload
 
-from latexify import ipython_wrappers
+from latexify.codegen.algorithmic_codegen import AlgorithmicCodegen, IPythonLatexifier
+from latexify.codegen.function_codegen import FunctionCodegen
+from latexify.exceptions import LatexifyError
+from latexify.generate_latex import get_latex
+from latexify.ipython_wrappers import LatexifyWrapper
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    import ast
+    from collections.abc import Callable, Iterable
+
 
 
 @overload
-def algorithmic(fn: Callable[..., Any], **kwargs: Any) -> ipython_wrappers.LatexifiedAlgorithm: ...
+def algorithmic(fn: Callable[..., Any], to_file: str | None = None, **kwargs: Any) -> LatexifyWrapper: ...
 
 
 @overload
 def algorithmic(
     **kwargs: Any,
-) -> Callable[[Callable[..., Any]], ipython_wrappers.LatexifiedAlgorithm]: ...
+) -> Callable[[Callable[..., Any]], LatexifyWrapper]: ...
 
 
 def algorithmic(
     fn: Callable[..., Any] | None = None, **kwargs: Any
-) -> ipython_wrappers.LatexifiedAlgorithm | Callable[[Callable[..., Any]], ipython_wrappers.LatexifiedAlgorithm]:
+) -> LatexifyWrapper | Callable[[Callable[..., Any]], LatexifyWrapper]:
     """Attach LaTeX pretty-printing to the given function.
 
     This function works with or without specifying the target function as the
@@ -39,27 +46,36 @@ def algorithmic(
         - Otherwise, returns the wrapper function with given settings.
     """
     if fn is not None:
-        return ipython_wrappers.LatexifiedAlgorithm(fn, **kwargs)
+        try:
+            algpseudocode = get_latex(fn, LatexifierClass=AlgorithmicCodegen, **kwargs)
+        except LatexifyError as e:
+            algpseudocode = _describe_error(e)
 
-    def wrapper(f):
-        return ipython_wrappers.LatexifiedAlgorithm(f, **kwargs)
+        try:
+            latex = get_latex(fn, LatexifierClass=IPythonLatexifier, **kwargs)
+        except LatexifyError as e:
+            latex = _describe_error(e)
+        else:
+            latex = f"$ {latex} $"
 
-    return wrapper
+        return LatexifyWrapper(fn, algpseudocode, latex)
+
+    return partial(algorithmic, **kwargs)
 
 
 @overload
-def function(fn: Callable[..., Any], **kwargs: Any) -> ipython_wrappers.LatexifiedFunction: ...
+def function(fn: Callable[..., Any], **kwargs: Any) -> LatexifyWrapper: ...
 
 
 @overload
 def function(
     **kwargs: Any,
-) -> Callable[[Callable[..., Any]], ipython_wrappers.LatexifiedFunction]: ...
+) -> Callable[[Callable[..., Any]], LatexifyWrapper]: ...
 
 
 def function(
     fn: Callable[..., Any] | None = None, **kwargs: Any
-) -> ipython_wrappers.LatexifiedFunction | Callable[[Callable[..., Any]], ipython_wrappers.LatexifiedFunction]:
+) -> LatexifyWrapper | Callable[[Callable[..., Any]], LatexifyWrapper]:
     """Attach LaTeX pretty-printing to the given function.
 
     This function works with or without specifying the target function as the positional
@@ -76,38 +92,46 @@ def function(
         - Otherwise, returns the wrapper function with given settings.
     """
     if fn is not None:
-        return ipython_wrappers.LatexifiedFunction(fn, **kwargs)
+        try:
+            latex = get_latex(fn, LatexifierClass=FunctionCodegen, **kwargs)
+        except LatexifyError as e:
+            s = latex = _describe_error(e)
+        else:
+            s, latex = latex, f"$$ \\displaystyle {latex} $$"
+        return LatexifyWrapper(fn, s, latex)
 
-    def wrapper(f):
-        return ipython_wrappers.LatexifiedFunction(f, **kwargs)
-
-    return wrapper
+    return partial(function, **kwargs)
 
 
 @overload
-def expression(fn: Callable[..., Any], **kwargs: Any) -> ipython_wrappers.LatexifiedFunction: ...
+def expression(fn: Callable[..., Any], **kwargs: Any) -> LatexifyWrapper: ...
 
 
 @overload
 def expression(
-    **kwargs: Any,
-) -> Callable[[Callable[..., Any]], ipython_wrappers.LatexifiedFunction]: ...
+    prefixes: set[str] | None = None,
+    identifiers: dict[str, str] | None = None,
+    reduce_assignments: bool = False,
+    expand_functions: set[str] | None = None,
+    pre_transformers: Iterable[ast.NodeTransformer] | None = None,
+    post_transformers: Iterable[ast.NodeTransformer] | None = None,
+    use_math_symbols: bool = True,
+    use_set_symbols: bool = False,
+    use_signature: bool = True,
+) -> Callable[[Callable[..., Any]], LatexifyWrapper]: ...
 
 
 def expression(
     fn: Callable[..., Any] | None = None, **kwargs: Any
-) -> ipython_wrappers.LatexifiedFunction | Callable[[Callable[..., Any]], ipython_wrappers.LatexifiedFunction]:
+) -> LatexifyWrapper | Callable[[Callable[..., Any]], LatexifyWrapper]:
     """Attach LaTeX pretty-printing to the given function.
 
     This function is a shortcut for `latexify.function` with the default parameter
     `use_signature=False`.
     """
-    kwargs["use_signature"] = kwargs.get("use_signature", False)
+    kwargs.setdefault("use_signature", False)
+    return function(fn, **kwargs)
 
-    if fn is not None:
-        return ipython_wrappers.LatexifiedFunction(fn, **kwargs)
 
-    def wrapper(f):
-        return ipython_wrappers.LatexifiedFunction(f, **kwargs)
-
-    return wrapper
+def _describe_error(e):
+    return f"{e.__class__.__name__}: {e!s}"

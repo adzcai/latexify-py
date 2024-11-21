@@ -19,6 +19,10 @@ from latexify.codegen.expression_codegen import convert_constant
         (456.789, "456.789"),
         (-3 + 4j, "(-3+4j)"),
         ("string", r'\textrm{"string"}'),
+        (
+            r"$tr&ing_with_%pecial~{cha#rac^ters}",
+            r'\textrm{"\$tr\&ing\_with\_\%pecial\textasciitilde{}\{cha\#rac\textasciicircum{}ters\}"}',
+        ),
         (..., r"\cdots"),
     ],
 )

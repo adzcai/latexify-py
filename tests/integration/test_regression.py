@@ -4,9 +4,13 @@
 
 from __future__ import annotations
 
+from functools import partial
 import math
 
+from latexify.plugins.sum_prod import SumProdPlugin
 from tests.integration.utils import check_function
+
+check_function_sum_prod = partial(check_function, plugins=[SumProdPlugin()])
 
 
 def test_quadratic_solution() -> None:
@@ -46,12 +50,13 @@ def test_x_times_beta() -> None:
     check_function(xtimesbeta, latex_with_symbols, use_math_symbols=True)
 
 
+
 def test_sum_with_limit_1arg() -> None:
     def sum_with_limit(n):
         return sum(i**2 for i in range(n))
 
     latex = r"\mathrm{sum\_with\_limit}(n) = \sum_{i = 0}^{n - 1}" r" \mathopen{}\left({i^{2}}\mathclose{}\right)"
-    check_function(sum_with_limit, latex)
+    check_function_sum_prod(sum_with_limit, latex)
 
 
 def test_sum_with_limit_2args() -> None:
@@ -59,7 +64,7 @@ def test_sum_with_limit_2args() -> None:
         return sum(i**2 for i in range(a, n))
 
     latex = r"\mathrm{sum\_with\_limit}(a, n) = \sum_{i = a}^{n - 1}" r" \mathopen{}\left({i^{2}}\mathclose{}\right)"
-    check_function(sum_with_limit, latex)
+    check_function_sum_prod(sum_with_limit, latex)
 
 
 def test_sum_with_reducible_limit() -> None:
@@ -67,7 +72,7 @@ def test_sum_with_reducible_limit() -> None:
         return sum(i for i in range(n + 1))
 
     latex = r"\mathrm{sum\_with\_limit}(n) = \sum_{i = 0}^{n}" r" \mathopen{}\left({i}\mathclose{}\right)"
-    check_function(sum_with_limit, latex)
+    check_function_sum_prod(sum_with_limit, latex)
 
 
 def test_sum_with_irreducible_limit() -> None:
@@ -75,7 +80,7 @@ def test_sum_with_irreducible_limit() -> None:
         return sum(i for i in range(n * 3))
 
     latex = r"\mathrm{sum\_with\_limit}(n) = \sum_{i = 0}^{n \cdot 3 - 1}" r" \mathopen{}\left({i}\mathclose{}\right)"
-    check_function(sum_with_limit, latex)
+    check_function_sum_prod(sum_with_limit, latex)
 
 
 def test_prod_with_limit_1arg() -> None:
@@ -83,7 +88,7 @@ def test_prod_with_limit_1arg() -> None:
         return math.prod(i**2 for i in range(n))
 
     latex = r"\mathrm{prod\_with\_limit}(n) =" r" \prod_{i = 0}^{n - 1} \mathopen{}\left({i^{2}}\mathclose{}\right)"
-    check_function(prod_with_limit, latex)
+    check_function_sum_prod(prod_with_limit, latex)
 
 
 def test_prod_with_limit_2args() -> None:
@@ -91,7 +96,7 @@ def test_prod_with_limit_2args() -> None:
         return math.prod(i**2 for i in range(a, n))
 
     latex = r"\mathrm{prod\_with\_limit}(a, n) =" r" \prod_{i = a}^{n - 1} \mathopen{}\left({i^{2}}\mathclose{}\right)"
-    check_function(prod_with_limit, latex)
+    check_function_sum_prod(prod_with_limit, latex)
 
 
 def test_prod_with_reducible_limits() -> None:
@@ -99,7 +104,7 @@ def test_prod_with_reducible_limits() -> None:
         return math.prod(i for i in range(n - 1))
 
     latex = r"\mathrm{prod\_with\_limit}(n) =" r" \prod_{i = 0}^{n - 2} \mathopen{}\left({i}\mathclose{}\right)"
-    check_function(prod_with_limit, latex)
+    check_function_sum_prod(prod_with_limit, latex)
 
 
 def test_prod_with_irreducible_limit() -> None:
@@ -107,7 +112,7 @@ def test_prod_with_irreducible_limit() -> None:
         return math.prod(i for i in range(n * 3))
 
     latex = r"\mathrm{prod\_with\_limit}(n) = " r"\prod_{i = 0}^{n \cdot 3 - 1} \mathopen{}\left({i}\mathclose{}\right)"
-    check_function(prod_with_limit, latex)
+    check_function_sum_prod(prod_with_limit, latex)
 
 
 def test_nested_function() -> None:

@@ -7,25 +7,25 @@ import textwrap
 
 import pytest
 from latexify import exceptions
-from latexify.codegen import function_codegen
+from latexify.ast_utils import parse_function
+from latexify.codegen.function_codegen import FunctionCodegen
+from latexify.codegen.plugin_stack import default_stack
 
 from tests import utils
+
+visitor = default_stack(FunctionCodegen())
 
 
 @utils.require_at_least(10)
 def test_functiondef_match() -> None:
-    tree = ast.parse(
-        textwrap.dedent(
-            """
-            def f(x):
-                match x:
-                    case 0:
-                        return 1
-                    case _:
-                        return 3 * x
-            """
-        )
-    )
+    def f(x):
+        match x:
+            case 0:
+                return 1
+            case _:
+                return 3 * x
+
+    tree = parse_function(f)
     expected = (
         r"f(x) ="
         r" \left\{ \begin{array}{ll}"
@@ -33,43 +33,35 @@ def test_functiondef_match() -> None:
         r" 3 x, & \mathrm{otherwise}"
         r" \end{array} \right."
     )
-    assert function_codegen.FunctionCodegen().visit(tree) == expected
+    assert visitor.visit(tree) == expected
 
 
 @utils.require_at_least(10)
 def test_matchvalue() -> None:
-    tree = ast.parse(
-        textwrap.dedent(
-            """
-            match x:
-                case 0:
-                    return 1
-                case _:
-                    return 2
-            """
-        )
-    ).body[0]
+    src = """
+    match x:
+        case 0:
+            return 1
+        case _:
+            return 2
+    """
     expected = (
         r"\left\{ \begin{array}{ll}" r" 1, & \mathrm{if} \ x = 0 \\" r" 2, & \mathrm{otherwise}" r" \end{array} \right."
     )
-    assert function_codegen.FunctionCodegen().visit(tree) == expected
+    utils.assert_latex_equal(visitor, src, ast.Match, expected)
 
 
 @utils.require_at_least(10)
 def test_multiple_matchvalue() -> None:
-    tree = ast.parse(
-        textwrap.dedent(
-            """
-            match x:
-                case 0:
-                    return 1
-                case 1:
-                    return 2
-                case _:
-                    return 3
-            """
-        )
-    ).body[0]
+    src = """
+    match x:
+        case 0:
+            return 1
+        case 1:
+            return 2
+        case _:
+            return 3
+    """
     expected = (
         r"\left\{ \begin{array}{ll}"
         r" 1, & \mathrm{if} \ x = 0 \\"
@@ -77,7 +69,7 @@ def test_multiple_matchvalue() -> None:
         r" 3, & \mathrm{otherwise}"
         r" \end{array} \right."
     )
-    assert function_codegen.FunctionCodegen().visit(tree) == expected
+    utils.assert_latex_equal(visitor, src, ast.Match, expected)
 
 
 @utils.require_at_least(10)
@@ -96,7 +88,7 @@ def test_single_matchvalue_no_wildcards() -> None:
         exceptions.LatexifySyntaxError,
         match=r"^Match statement must contain the wildcard\.$",
     ):
-        function_codegen.FunctionCodegen().visit(tree)
+        visitor.visit(tree)
 
 
 @utils.require_at_least(10)
@@ -117,7 +109,7 @@ def test_multiple_matchvalue_no_wildcards() -> None:
         exceptions.LatexifySyntaxError,
         match=r"^Match statement must contain the wildcard\.$",
     ):
-        function_codegen.FunctionCodegen().visit(tree)
+        visitor.visit(tree)
 
 
 @utils.require_at_least(10)
@@ -138,7 +130,7 @@ def test_matchas_nonempty() -> None:
         exceptions.LatexifyNotSupportedError,
         match=r"^Unsupported AST: MatchAs$",
     ):
-        function_codegen.FunctionCodegen().visit(tree)
+        visitor.visit(tree)
 
 
 @utils.require_at_least(10)
@@ -159,7 +151,7 @@ def test_matchvalue_no_return() -> None:
         exceptions.LatexifyNotSupportedError,
         match=r"^Match cases must contain exactly 1 return statement\.$",
     ):
-        function_codegen.FunctionCodegen().visit(tree)
+        visitor.visit(tree)
 
 
 @utils.require_at_least(10)
@@ -181,4 +173,4 @@ def test_matchvalue_mutliple_statements() -> None:
         exceptions.LatexifyNotSupportedError,
         match=r"^Match cases must contain exactly 1 return statement\.$",
     ):
-        function_codegen.FunctionCodegen().visit(tree)
+        visitor.visit(tree)

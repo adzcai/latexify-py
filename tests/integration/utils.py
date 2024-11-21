@@ -27,24 +27,24 @@ def check_function(
     #         ...
     if not kwargs:
         latexified = frontend.function(fn)
-        assert str(latexified) == latex
-        assert latexified._repr_latex_() == rf"$$ \displaystyle {latex} $$"
+        assert str(latexified) == latex, str(latexified)
+        assert latexified._repr_latex_() == rf"$$ \displaystyle {latex} $$", latexified._repr_latex_()
 
     # Checks the syntax:
     #     @function(**kwargs)
     #     def fn(...):
     #         ...
     latexified = frontend.function(**kwargs)(fn)
-    assert str(latexified) == latex
-    assert latexified._repr_latex_() == rf"$$ \displaystyle {latex} $$"
+    assert str(latexified) == latex, str(latexified)
+    assert latexified._repr_latex_() == rf"$$ \displaystyle {latex} $$", latexified._repr_latex_()
 
     # Checks the syntax:
     #     def fn(...):
     #         ...
     #     latexified = function(fn, **kwargs)
     latexified = frontend.function(fn, **kwargs)
-    assert str(latexified) == latex
-    assert latexified._repr_latex_() == rf"$$ \displaystyle {latex} $$"
+    assert str(latexified) == latex, str(latexified)
+    assert latexified._repr_latex_() == rf"$$ \displaystyle {latex} $$", latexified._repr_latex_()
 
 
 def check_algorithm(
