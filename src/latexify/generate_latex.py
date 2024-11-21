@@ -20,44 +20,39 @@ if TYPE_CHECKING:
     from latexify.codegen.plugin import Plugin
 
 
-def get_transformers(
+def default_transformers(
     prefixes: set[str] | None = None,
     identifiers: dict[str, str] | None = None,
     reduce_assignments: bool = False,
     expand_functions: set[str] | None = None,
-    pre_transformers: Iterable[ast.NodeTransformer] | None = None,
-    post_transformers: Iterable[ast.NodeTransformer] | None = None,
-    **_,
 ) -> Generator[ast.NodeTransformer, None, None]:
     """
     Get a generator of transformers to apply to the AST.
 
     Args:
-        expand_functions: If set, the names of the functions to expand.
+        prefixes: Prefixes of identifiers to trim. e.g. if set to ["foo.bar"], all
+            identifiers of the form "foo.bar.suffix" will be replaced with "suffix"
         identifiers: If set, the mapping to replace identifier names in the
             function. Keys are the original names of the identifiers,
             and corresponding values are the replacements.
             Both keys and values have to represent valid Python identifiers:
             ^[A-Za-z_][A-Za-z0-9_]*$
-        prefixes: Prefixes of identifiers to trim. E.g., if "foo.bar" in prefixes, all
-            identifiers with the form "foo.bar.suffix" will be replaced to "suffix"
         reduce_assignments: If True, assignment statements are used to synthesize
             the final expression.
-        pre_transformers: Transformers to apply before the main transformers.
-        post_transformers: Transformers to apply after the main transformers.
+        expand_functions: If set, the names of the functions to expand.
     """
-    yield from pre_transformers or ()
-    yield AugAssignReplacer()
-    if prefixes is not None:
-        yield PrefixTrimmer(prefixes)
-    if identifiers is not None:
-        yield IdentifierReplacer(identifiers)
-    if reduce_assignments:
-        yield DocstringRemover()
-        yield AssignmentReducer()
-    if expand_functions is not None:
-        yield FunctionExpander(expand_functions)
-    yield from post_transformers or ()
+    return [
+        t
+        for t in [
+            AugAssignReplacer(),
+            prefixes and PrefixTrimmer(prefixes),
+            identifiers and IdentifierReplacer(identifiers),
+            reduce_assignments and DocstringRemover(),
+            reduce_assignments and AssignmentReducer(),
+            expand_functions and FunctionExpander(expand_functions),
+        ]
+        if t
+    ]
 
 
 def get_latex(
@@ -65,19 +60,55 @@ def get_latex(
     /,
     LatexifierClass: type[Plugin] = FunctionCodegen,  # noqa: N803
     to_file: str | None = None,
+    # transformers arguments
+    prefixes: set[str] | None = None,
+    identifiers: dict[str, str] | None = None,
+    reduce_assignments: bool = False,
+    expand_functions: set[str] | None = None,
+    pre_transformers: Iterable[ast.NodeTransformer] | None = None,
+    post_transformers: Iterable[ast.NodeTransformer] | None = None,
+    # builtin plugin arguments
+    use_set_symbols: bool | None = None,
+    use_math_symbols: bool | None = None,
+    use_mathrm: bool | None = None,
+    # custom plugins
+    plugins: Iterable[Plugin] | None = None,
     **kwargs: Any,
 ) -> str:
-    """Construct the stack of plugins"""
+    """Convert a function to LaTeX code.
+
+    Args:
+        fn (Callable[..., Any]): The function to convert.
+        LatexifierClass (type[Plugin], optional): The base plugin class to use for conversion. Defaults to FunctionCodegen.
+        prefixes (set[str] | None, optional): The . Defaults to None.
+        identifiers (dict[str, str] | None, optional): _description_. Defaults to None.
+        reduce_assignments (bool, optional): _description_. Defaults to False.
+        expand_functions (set[str] | None, optional): _description_. Defaults to None.
+        pre_transformers (Iterable[ast.NodeTransformer] | None, optional): _description_. Defaults to None.
+        post_transformers (Iterable[ast.NodeTransformer] | None, optional): _description_. Defaults to None.
+
+    Returns:
+        str: The LaTeX code.
+    """
     tree = parse_function(fn)
-    for transformer in get_transformers(**kwargs):
+    for transformer in (
+        (pre_transformers or [])
+        + default_transformers(
+            prefixes=prefixes,
+            identifiers=identifiers,
+            reduce_assignments=reduce_assignments,
+            expand_functions=expand_functions,
+        )
+        + (post_transformers or [])
+    ):
         tree = transformer.visit(tree)
 
     stack = default_stack(
-        *kwargs.get("plugins", ()),
+        *(plugins or []),
         LatexifierClass(**kwargs),
-        use_set_symbols=kwargs.get("use_set_symbols"),
-        use_math_symbols=kwargs.get("use_math_symbols"),
-        use_mathrm=kwargs.get("use_mathrm"),
+        use_set_symbols=use_set_symbols,
+        use_math_symbols=use_math_symbols,
+        use_mathrm=use_mathrm,
     )
     latex = stack.visit(tree)
 

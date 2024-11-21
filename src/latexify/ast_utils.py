@@ -77,6 +77,24 @@ def make_attribute(value: ast.expr, attr: str):
     return ast.Attribute(value=value, attr=attr, ctx=ast.Load())
 
 
+def make_attribute_nested(parts: tuple[str, ...]) -> ast.Attribute | ast.Name:
+    """Helper to generate a new Attribute node from a nested identifier.
+
+    Args:
+        name (str): Identifier with periods (e.g. "numpy.random.randint").
+
+    Returns:
+        ast.Attribute: Generated ast.Attribute.
+    """
+    if len(parts) == 1:
+        return make_name(parts[0])
+
+    return make_attribute(
+        make_attribute_nested(parts[:-1]),
+        parts[-1],
+    )
+
+
 def make_constant(value: Any) -> ast.expr:
     """Generates a new Constant node.
 

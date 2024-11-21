@@ -19,14 +19,18 @@ def test_invalid_mapping() -> None:
         IdentifierReplacer({"foo": "def"})
 
 
-def test_name_replaced() -> None:
+def test_valid_mapping():
+    IdentifierReplacer({"np.linalg": "jnp"})
+
+
+def test_name_replaced():
     source = ast.Name(id="foo", ctx=ast.Load())
     expected = ast.Name(id="bar", ctx=ast.Load())
     transformed = IdentifierReplacer({"foo": "bar"}).visit(source)
     utils.assert_ast_equal(transformed, expected)
 
 
-def test_name_not_replaced() -> None:
+def test_name_not_replaced():
     source = ast.Name(id="foo", ctx=ast.Load())
     expected = ast.Name(id="foo", ctx=ast.Load())
     transformed = IdentifierReplacer({"fo": "bar"}).visit(source)

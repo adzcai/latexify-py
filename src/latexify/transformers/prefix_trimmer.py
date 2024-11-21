@@ -6,6 +6,7 @@ import ast
 import re
 
 from latexify import ast_utils
+from latexify.analyzers import analyze_attribute
 
 _PREFIX_PATTERN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*$")
 
@@ -42,45 +43,9 @@ class PrefixTrimmer(ast.NodeTransformer):
 
         self._prefixes = [tuple(p.split(".")) for p in prefixes]
 
-    def _get_prefix(self, node: ast.expr) -> tuple[str, ...] | None:
-        """Helper to obtain nested prefix.
-
-        Args:
-            node: Node to investigate.
-
-        Returns:
-            The prefix tuple, or None if the node has unsupported syntax.
-        """
-        if isinstance(node, ast.Name):
-            return (node.id,)
-
-        if isinstance(node, ast.Attribute):
-            parent = self._get_prefix(node.value)
-            return (*parent, node.attr) if parent is not None else None
-
-        return None
-
-    def _make_attribute(self, prefix: tuple[str, ...], name: str) -> ast.expr:
-        """Helper to generate a new Attribute or Name node.
-
-        Args:
-            prefix: List of prefixes.
-            name: Attribute name.
-
-        Returns:
-            Name node if prefix == (), (possibly nested) Attribute node otherwise.
-        """
-        if not prefix:
-            return ast_utils.make_name(name)
-
-        parent = self._make_attribute(prefix[:-1], prefix[-1])
-        return ast_utils.make_attribute(parent, name)
-
     def visit_Attribute(self, node: ast.Attribute) -> ast.expr:
         """Visit an Attribute node."""
-        prefix = self._get_prefix(node.value)
-        if prefix is None:
-            return node
+        prefix = analyze_attribute(node.value)
 
         # Performs leftmost longest match.
         # NOTE(odashi):
@@ -93,4 +58,4 @@ class PrefixTrimmer(ast.NodeTransformer):
             if prefix[:length] == p and length > matched_length:
                 matched_length = length
 
-        return self._make_attribute(prefix[matched_length:], node.attr)
+        return ast_utils.make_attribute_nested(prefix[matched_length:] + (node.attr,))

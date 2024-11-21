@@ -4,6 +4,14 @@ from latexify.codegen.plugin import Plugin
 
 
 class IdentifierConverter(Plugin):
+    """Converts Python identifiers to LaTeX expressions.
+
+    Args:
+        use_math_symbols (bool): Whether to convert identifiers with a math symbol
+            surface (e.g., "alpha") to the LaTeX symbol (e.g., "\\alpha").
+        use_mathrm (bool): Whether to wrap identifiers in \\mathrm{}.
+    """
+
     def __init__(
         self,
         use_math_symbols: bool | None = None,

@@ -4,14 +4,17 @@ from __future__ import annotations
 
 import ast
 import keyword
-import sys
-from typing import cast
+
+from latexify.analyzers import analyze_attribute
+from latexify.ast_utils import make_attribute_nested
 
 
 class IdentifierReplacer(ast.NodeTransformer):
     """NodeTransformer to replace identifier names.
 
-    This class defines a rule to replace identifiers in AST with specified names.
+    This class defines a rule to replace identifiers in AST with the specified new identifiers.
+    This runs _before_ the codegen plugins,
+    so the plugins will see the modified AST.
 
     Args:
         mapping: User defined mapping of names. Keys are the original names of the
@@ -33,46 +36,43 @@ class IdentifierReplacer(ast.NodeTransformer):
     def __init__(self, mapping: dict[str, str]):
         self._mapping = mapping
 
-        for k, v in self._mapping.items():
-            if not str.isidentifier(k) or keyword.iskeyword(k):
-                raise ValueError(f"'{k}' is not an identifier name.")
-            if not str.isidentifier(v) or keyword.iskeyword(v):
-                raise ValueError(f"'{v}' is not an identifier name.")
+        for k, v in mapping.items():
+            self._check_valid(k)
+            self._check_valid(v)
 
-    def _replace_args(self, args: list[ast.arg]) -> list[ast.arg]:
-        """Helper function to replace arg names."""
-        return [ast.arg(arg=self._mapping.get(a.arg, a.arg)) for a in args]
+    def _replace(self, name: str, allow_attribute: bool = False) -> str:
+        replaced = self._mapping.get(name, name)
+        if not allow_attribute and "." in replaced:
+            return name
+        return replaced
 
-    def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.FunctionDef:
-        """Visit a FunctionDef node."""
-        visited = cast(ast.FunctionDef, self.generic_visit(node))
+    def _check_valid(self, name: str) -> None:
+        """Check if the name is a valid identifier."""
+        if keyword.iskeyword(name) or any(not str.isidentifier(part) for part in name.split(".")):
+            raise ValueError(f"'{name}' is not an identifier name.")
 
-        if sys.version_info < (3, 8):
-            args = ast.arguments(
-                args=self._replace_args(visited.args.args),
-                kwonlyargs=self._replace_args(visited.args.kwonlyargs),
-                kw_defaults=visited.args.kw_defaults,
-                defaults=visited.args.defaults,
-            )
-        else:
-            args = ast.arguments(
-                posonlyargs=self._replace_args(visited.args.posonlyargs),  # from 3.8
-                args=self._replace_args(visited.args.args),
-                kwonlyargs=self._replace_args(visited.args.kwonlyargs),
-                kw_defaults=visited.args.kw_defaults,
-                defaults=visited.args.defaults,
-            )
-
-        return ast.FunctionDef(
-            name=self._mapping.get(visited.name, visited.name),
-            args=args,
-            body=visited.body,
-            decorator_list=visited.decorator_list,
+    def visit_arg(self, node: ast.arg):
+        return ast.arg(
+            arg=self._replace(node.arg),
+            annotation=node.annotation,
+            type_comment=node.type_comment,
         )
 
     def visit_Name(self, node: ast.Name) -> ast.Name:
-        """Visit a Name node."""
-        return ast.Name(
-            id=self._mapping.get(node.id, node.id),
-            ctx=node.ctx,
+        replaced = self._replace(node.id, allow_attribute=True)
+        return make_attribute_nested(replaced.split("."))
+
+    def visit_Attribute(self, node: ast.Attribute):
+        expanded = ".".join(analyze_attribute(node))
+        name = self._replace(expanded, allow_attribute=True)
+        return make_attribute_nested(name.split("."))
+
+    def visit_FunctionDef(self, node: ast.FunctionDef):
+        replaced = self.generic_visit(node)
+        return ast.FunctionDef(
+            name=self._replace(node.name),
+            args=replaced.args,
+            body=replaced.body,
+            decorator_list=replaced.decorator_list,
+            returns=replaced.returns,
         )

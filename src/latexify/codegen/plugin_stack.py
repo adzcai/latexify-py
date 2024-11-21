@@ -19,7 +19,18 @@ class Stack(ast.NodeVisitor):
         for plugin in plugins:
             plugin._setup(self)  # noqa: SLF001
 
-    def visit(self, node):
+    def visit(self, node: ast.AST) -> str:
+        """Apply the plugins to the AST node.
+
+        Args:
+            node (ast.AST): The AST node to convert to LaTeX.
+
+        Raises:
+            LatexifyNotSupportedError: If the AST node is not supported by any plugin.
+
+        Returns:
+            str: The LaTeX code.
+        """
         for plugin in self._plugins:
             try:
                 return plugin.local_visit(node)

@@ -22,8 +22,6 @@ class ExpressionVisitor(Plugin):
         - `foo_bar` --> `\\mathrm{foo\\_bar}`, otherwise.
 
     Args:
-        use_math_symbols: Whether to convert identifiers with a math symbol
-            surface (e.g., "alpha") to the LaTeX symbol (e.g., "\\alpha").
         use_set_symbols: Whether to use set symbols for comparison operators.
     """
 
@@ -33,9 +31,9 @@ class ExpressionVisitor(Plugin):
     def __init__(
         self,
         *,
-        use_set_symbols: bool = False,
-        **_,
+        use_set_symbols: bool | None = None,
     ) -> None:
+        use_set_symbols = False if use_set_symbols is None else use_set_symbols
         self._bin_op_rules = expression_rules.SET_BIN_OP_RULES if use_set_symbols else expression_rules.BIN_OP_RULES
         self._compare_ops = expression_rules.SET_COMPARE_OPS if use_set_symbols else expression_rules.COMPARE_OPS
 
@@ -107,6 +105,7 @@ class ExpressionVisitor(Plugin):
             arg_latex = self._wrap_operand(arg, precedence, force_wrap=force_wrap_factorial or force_wrap_pow)
             elements = [rule.left, arg_latex, rule.right]
         else:
+            # ignore unary functions when applied to multiple args
             arg_latex = self.visit_and_join(node.args)
             if rule.is_wrapped:
                 elements = [rule.left, arg_latex, rule.right]

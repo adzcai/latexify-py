@@ -5,7 +5,7 @@ from __future__ import annotations
 from latexify.generate_latex import get_latex
 
 
-def test_get_latex_identifiers() -> None:
+def test_replace_identifiers() -> None:
     def myfn(myvar):
         return 3 * myvar
 
@@ -18,7 +18,20 @@ def test_get_latex_identifiers() -> None:
     assert get_latex(myfn, identifiers=identifiers) == latex_with_flag
 
 
-def test_get_latex_prefixes() -> None:
+def test_replace_identifiers_attributes() -> None:
+    def myfn(myvar):
+        return 3 * np.linalg.norm(myvar)  # noqa: F821
+
+    identifiers = {"myfn": "f", "myvar": "x", "np.linalg.norm": "foo"}
+
+    latex_without_flag = r"\mathrm{myfn}(\mathrm{myvar}) = 3 \mathrm{np}.\mathrm{linalg}.\mathrm{norm} \mathopen{}\left( \mathrm{myvar} \mathclose{}\right)"
+    latex_with_flag = r"f(x) = 3 \mathrm{foo} \mathopen{}\left( x \mathclose{}\right)"
+
+    assert get_latex(myfn) == latex_without_flag
+    assert get_latex(myfn, identifiers=identifiers) == latex_with_flag
+
+
+def test_prefixes() -> None:
     abc = object()
 
     def f(x):
@@ -39,7 +52,7 @@ def test_get_latex_prefixes() -> None:
     assert get_latex(f, prefixes={"abc", "x", "x.y.z"}) == latex_with_flag4
 
 
-def test_get_latex_reduce_assignments() -> None:
+def test_reduce_assignments() -> None:
     def f(x):
         y = 3 * x
         return y
@@ -52,7 +65,7 @@ def test_get_latex_reduce_assignments() -> None:
     assert get_latex(f, reduce_assignments=True) == latex_with_flag
 
 
-def test_get_latex_reduce_assignments_with_docstring() -> None:
+def test_reduce_assignments_with_docstring() -> None:
     def f(x):
         """DocstringRemover is required."""
         y = 3 * x
@@ -66,7 +79,7 @@ def test_get_latex_reduce_assignments_with_docstring() -> None:
     assert get_latex(f, reduce_assignments=True) == latex_with_flag
 
 
-def test_get_latex_reduce_assignments_with_aug_assign() -> None:
+def test_reduce_assignments_with_aug_assign() -> None:
     def f(x):
         y = 3
         y *= x
@@ -80,7 +93,7 @@ def test_get_latex_reduce_assignments_with_aug_assign() -> None:
     assert get_latex(f, reduce_assignments=True) == latex_with_flag
 
 
-def test_get_latex_use_math_symbols() -> None:
+def test_use_math_symbols() -> None:
     def f(alpha):
         return alpha
 
@@ -92,7 +105,7 @@ def test_get_latex_use_math_symbols() -> None:
     assert get_latex(f, use_math_symbols=True) == latex_with_flag
 
 
-def test_get_latex_use_signature() -> None:
+def test_use_signature() -> None:
     def f(x):
         return x
 
@@ -104,7 +117,7 @@ def test_get_latex_use_signature() -> None:
     assert get_latex(f, use_signature=True) == latex_with_flag
 
 
-def test_get_latex_use_set_symbols() -> None:
+def test_use_set_symbols() -> None:
     def f(x, y):
         return x & y
 

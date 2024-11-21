@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import ast
 import contextlib
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 from typing import TYPE_CHECKING
 
 from latexify.codegen.plugin import _ArgumentsPlugin
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from collections.abc import Generator, Iterable
 
 
-class AlgorithmicCodegen(_ArgumentsPlugin):
+class AlgorithmicCodegen(_ArgumentsPlugin, metaclass=ABCMeta):
     """Codegen for single algorithms.
 
     This subclasses the ast.NodeVisitor
@@ -26,11 +26,6 @@ class AlgorithmicCodegen(_ArgumentsPlugin):
 
     This codegen works for Module with single FunctionDef node to generate a single
     LaTeX expression of the given algorithm.
-
-    Args:
-        use_math_symbols: Whether to convert identifiers with a math symbol surface
-            (e.g., "alpha") to the LaTeX symbol (e.g., "\\alpha").
-        use_set_symbols: Whether to use set symbols or not.
     """
 
     _indent_level: int = 0

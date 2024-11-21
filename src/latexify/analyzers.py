@@ -100,3 +100,21 @@ def reduce_stop_parameter(node: ast.expr) -> ast.expr:
             right=ast_utils.make_constant(value=rhs.value - shift),
         )
     )
+
+
+def analyze_attribute(node: ast.Attribute | ast.Name) -> tuple[str, ...]:
+    """Helper to obtain nested prefix.
+
+    Args:
+        node (ast.Attribute | ast.Name): Attribute or name node.
+
+    Returns:
+        The nested prefix. e.g. ("numpy", "random") for "numpy.random".
+    """
+    if isinstance(node, ast.Name):
+        return (node.id,)
+
+    if isinstance(node, ast.Attribute):
+        return (*analyze_attribute(node.value), node.attr)
+
+    raise LatexifySyntaxError("Unsupported AST for analyze_attribute.")
