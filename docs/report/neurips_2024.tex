@@ -1,0 +1,215 @@
+\documentclass{article}
+
+
+% if you need to pass options to natbib, use, e.g.:
+%     \PassOptionsToPackage{numbers, compress}{natbib}
+% before loading neurips_2024
+
+
+% ready for submission
+\usepackage[preprint]{neurips_2024}
+
+
+% to compile a preprint version, e.g., for submission to arXiv, add add the
+% [preprint] option:
+%     \usepackage[preprint]{neurips_2024}
+
+
+% to compile a camera-ready version, add the [final] option, e.g.:
+%     \usepackage[final]{neurips_2024}
+
+
+% to avoid loading the natbib package, add option nonatbib:
+%    \usepackage[nonatbib]{neurips_2024}
+
+
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+\usepackage{xcolor}         % colors
+\usepackage{listings}       % code listings
+
+\newcommand{\ourpkg}{\texttt{latexify-py}}
+\newcommand{\theirpkg}{\texttt{google/latexify\_py}}
+\newcommand{\vocab}[1]{\textbf{#1}}
+
+% \lstdefinestyle{pysty}{
+%     language=Python
+% }
+
+
+\title{Latexify-py}
+
+
+% The \author macro works with any number of authors. There are two commands
+% used to separate the names and addresses of multiple authors: \And and \AND.
+%
+% Using \And between authors leaves it to LaTeX to determine where to break the
+% lines. Using \AND forces a line break at that point. So, if LaTeX puts 3 of 4
+% authors names on the first line, and the last on the second line, try using
+% \AND instead of \And before the third author name.
+
+
+\author{%
+  Alexander D. Cai \\
+  Harvard College \\
+  % Cranberry-Lemon University\\
+  % Pittsburgh, PA 15213 \\
+  \texttt{alexcai@college.harvard.edu}
+}
+
+
+\begin{document}
+
+
+\maketitle
+
+
+\begin{abstract}
+  We present the \ourpkg{} Python package for converting Python source code to \LaTeX{} pseudocode.
+  \ourpkg{} is intended for authors of technical texts who wish to provide a readable \LaTeX{} pseudocode description of an algorithm alongside a Python reference implementation.
+  \ourpkg{} is implemented using the Python \texttt{ast} package.
+  It extends a previous implementation at \url{https://github.com/google/latexify_py} by focusing on modularity and improved user experience.
+  The source code is available at \url{https://github.com/adzcai/latexify-py}.
+\end{abstract}
+
+
+\section{Introduction}
+
+Programming courses often use a textbook as a reference.
+Such textbooks often describe algorithms using \vocab{pseudocode},
+which ensures that the algorithm is understandable to readers regardless of their programming language background.
+Using \LaTeX{} to write this pseudocode also enables the use of mathematical notation,
+which often provides a much more concise and familiar presentation that is implementation-agnostic.
+Another opposing paradigm is the \vocab{literate programming} paradigm,
+as represented by the use of Jupyter notebooks or R Markdown files,
+in which the algorithms are implemented using a specific programming language.
+These have the benefit of being \emph{executable},
+but force the author to choose language-specific or, often, framework-specific implementation details which may be irrelevant to the algorithm's functionality.
+\ourpkg{} supports translation from a low-level Python implementation of an algorithm to a high-level pseudocode description of that algorithm.
+(Note that this has the opposite direction as most compilers, which take in high-level code and compile it down to low-level machine instructions.)
+While Python, as a high-level programming language,
+is already highly readable,
+supporting translation to pseudocode still offers the benefits outlined above.
+This allows authors of pedagogical programming texts the benefits of both worlds.
+The most relevant previous work in this direction is the project \theirpkg{} on GitHub,
+which has 7.3k stars at the time of writing.
+This project builds on top of \theirpkg{} with a focus on extensibility and user experience.
+Our main contributions are as follows:
+
+\begin{enumerate}
+    \item \vocab{Plugin system} \ref{sec:plugins}. We rewrite 
+\end{enumerate}
+
+
+\section{Methods}
+
+In this section,
+we discuss the key features of \ourpkg{}
+and its improvements upon \theirpkg{}.
+
+\subsection{Overall procedure}
+
+Python exposes the builtin \verb|ast| package for enabling programmers to parse and transform the abstract syntax tree (AST) corresponding to a given string of Python source code.
+It provides the \verb|ast.parse| command for parsing a Python code string into its AST representation.
+It also provides the two classes \verb|ast.NodeTransformer| and \verb|ast.NodeVisitor| for recursively traversing the AST.
+\ourpkg{} consists mostly of subclasses of these two classes.
+The translation from Python to \LaTeX{} takes place in two stages:
+
+\begin{enumerate}
+
+    \item \vocab{AST transformation}.
+        The first stage transforms the AST itself using subclasses of Python's \verb|ast.NodeTransformer|.
+        For example, the \verb|AugAssignReplacer| class of \theirpkg{} replaces Python's \vocab{augmented assignment operations} (e.g. \verb|x += 1|) with the explicit assignment \verb|x = x + 1|.
+
+    \item \vocab{AST translation}.
+        The second stage recursively translates the AST into \LaTeX{} code using subclasses of Python's \verb|ast.NodeVisitor|.
+        For example, our \verb|IdentifierConverter| class converts Python identifiers into the corresponding LaTeX strings.
+
+\end{enumerate}
+
+
+
+
+
+\subsection{Plugin system}
+\label{sec:plugins}
+
+Our main contribution was rewriting the package in terms of an extensible \vocab{plugin system}.
+The original package consisted of a fixed set of program transformations.
+Users could opt in or out of specific features by providing keyword arguments to the public API.
+For example,
+the \verb|use_math_symbols| keyword argument could be set to true
+to replace a variable name corresponding to a Greek letter
+with the corresponding Greek letter:
+\begin{lstlisting}[language=Python]
+def greek_demo(alpha, beta, Omega):
+    return alpha * beta + Omega
+with_symbols = latexify.function(greek_demo, use_math_symbols=True)
+without_symbols = latexify.function(greek_demo, use_math_symbols=True)
+\end{lstlisting}
+Here, \verb|with_symbols| results in
+\[
+\displaystyle \mathrm{greek\_demo}(\alpha, \beta, \Omega) = \alpha \beta + \Omega
+\]
+while \verb|without_symbols| results in
+\[
+\displaystyle \mathrm{greek\_demo}(\mathrm{alpha}, \mathrm{beta}, \mathrm{Omega}) = \mathrm{alpha} \cdot \mathrm{beta} + \mathrm{Omega}.
+\]
+This system does not enable the user to customize handling of specific AST nodes.
+This violates the principle that frameworks should have \vocab{escape hatches}
+(e.g. Rust's \verb|unsafe| or React's \verb|useRef|)
+that enable the user to circumvent the framework's design choices.
+
+We implement an extensible \vocab{plugin system} to support user customization.
+The implementation is simple and modular.
+We create a \verb|PluginList| class inheriting from \verb|ast.NodeVisitor|.
+Its constructor takes in a list of \verb|ast.NodeVisitor| instances.
+Its \verb|visit| method,
+which takes in an AST node and outputs a \LaTeX{} string,
+simply iterates through the list of \verb|ast.NodeVisitor|s and calls the first one that supports translation of the AST node.
+
+The list of \verb|ast.NodeVisitor|s must in particular be subclasses of our \verb|Plugin| class,
+which replaces all calls to \verb|visit| with calls to the \verb|visit| function of the stack that it is part of.
+This ensures that, for example,
+if a user wishes to override some \ourpkg{} functionality by providing their plugin,
+the translation will always check the user's plugin before falling back to the library implementation.
+
+We also refactor the functionality of \theirpkg{} in terms of the new plugin system.
+In particular, the \verb|ExpressionCodegen| class of \theirpkg{} had grown to include \LaTeX{} translations for various \verb|numpy| commands,
+which seemed odd to include in the base package since these depended on \verb|numpy| while the actual expressions would not.
+As a result, \theirpkg{} would convert expressions such as \verb|np.linalg.inv(np.array([[1, 1], [-1, 1]]))| purely based on the identifier names,
+even if \verb|numpy| was not installed in the environment.
+
+
+
+
+
+\subsection{Identifiers}
+
+The original package only allowed for replacing identifiers with other valid Python identifiers (see \verb|transformers.identifier_replacer.py|).
+That is,
+it was impossible to associate a given Python identifier with an arbitrary \LaTeX{} expression.
+This was because the \verb|IdentifierReplacer| class was implemented as a subclass of \verb|ast.NodeTransformer|,
+which only supports replacing an AST node with another valid AST node.
+It also did not support replacement of nested identifiers such as \verb|np.linalg.eigvals| with a single LaTeX expression.
+Doing so in the original implementation would require adding \verb|np.linalg| to a list of prefixes that would be entirely removed in the transformation process.
+In our implementation,
+
+
+\appendix
+
+\section{Appendix / supplemental material}
+
+
+Optionally include supplemental material (complete proofs, additional experiments and plots) in appendix.
+All such materials \textbf{SHOULD be included in the main submission.}
+
+
+
+\end{document}
