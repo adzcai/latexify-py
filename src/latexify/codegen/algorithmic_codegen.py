@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from collections.abc import Generator, Iterable
 
 
-class AlgorithmicCodegen(_ArgumentsPlugin, metaclass=ABCMeta):
+class _AlgorithmCodegenBase(_ArgumentsPlugin, metaclass=ABCMeta):
     """Codegen for single algorithms.
 
     This subclasses the ast.NodeVisitor
@@ -29,7 +29,7 @@ class AlgorithmicCodegen(_ArgumentsPlugin, metaclass=ABCMeta):
     """
 
     _indent_level: int = 0
-    LINE_BREAK: str
+    LINE_BREAK: str  # Line break character
 
     @abstractmethod
     def _statement(self, line: str) -> str:
@@ -187,7 +187,7 @@ class AlgorithmicCodegen(_ArgumentsPlugin, metaclass=ABCMeta):
         """
 
 
-class AlgorithmicCodegen(AlgorithmicCodegen):
+class AlgorithmicCodegen(_AlgorithmCodegenBase):
     SPACES_PER_INDENT = 4
     LINE_BREAK = "\n"
 
@@ -237,7 +237,7 @@ class AlgorithmicCodegen(AlgorithmicCodegen):
         return self._indent_level * self.SPACES_PER_INDENT * " " + line
 
 
-class IPythonLatexifier(AlgorithmicCodegen):
+class IPythonLatexifier(_AlgorithmCodegenBase):
     EM_PER_INDENT = 1
     LINE_BREAK = r" \\ "
 

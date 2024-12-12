@@ -15,7 +15,7 @@ def test_replace_identifiers() -> None:
     latex_with_flag = r"f(x) = 3 x"
 
     assert get_latex(myfn) == latex_without_flag
-    assert get_latex(myfn, identifiers=identifiers) == latex_with_flag
+    assert get_latex(myfn, replace_identifiers=identifiers) == latex_with_flag
 
 
 def test_replace_identifiers_attributes() -> None:
@@ -28,7 +28,7 @@ def test_replace_identifiers_attributes() -> None:
     latex_with_flag = r"f(x) = 3 \mathrm{foo} \mathopen{}\left( x \mathclose{}\right)"
 
     assert get_latex(myfn) == latex_without_flag
-    assert get_latex(myfn, identifiers=identifiers) == latex_with_flag
+    assert get_latex(myfn, replace_identifiers=identifiers) == latex_with_flag
 
 
 def test_prefixes() -> None:

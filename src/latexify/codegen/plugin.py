@@ -24,7 +24,7 @@ class Plugin(ast.NodeVisitor, metaclass=ABCMeta):
 
     def generic_visit(self, _node: ast.AST):
         # differentiate from actual LatexifyNotSupportedError
-        # that gets thrown by the Stack
+        # that gets thrown by the PluginStack
         raise NotImplementedError
 
     def visit_and_join(self, items: Iterable[ast.AST], sep: str = ", ") -> str:
@@ -33,6 +33,8 @@ class Plugin(ast.NodeVisitor, metaclass=ABCMeta):
 
 
 class _ArgumentsPlugin(Plugin):
+    """Plugin for handling function arguments."""
+
     def visit_arg(self, node: ast.arg):
         name = self.visit(node.arg)
         if node.annotation:

@@ -11,11 +11,16 @@ if TYPE_CHECKING:
 
 
 class NumpyPlugin(Plugin):
+    """Converts numpy linear algebra expressions to LaTeX.
+
+    Args:
+        pinv_symbol (str, optional): The symbol to use for matrix pseudoinverses. Defaults to r"\dagger".
+    """
+
     def __init__(
         self,
         pinv_symbol: str = r"\dagger",
     ):
-        super().__init__()
         self.CUSTOM_FUNCTIONS: dict[str, Callable[[ast.NodeVisitor, ast.Call], str]] = {
             "array": self._generate_matrix,
             "ndarray": self._generate_matrix,

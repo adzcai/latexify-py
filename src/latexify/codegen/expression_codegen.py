@@ -120,16 +120,6 @@ class ExpressionVisitor(Plugin):
 
         return " ".join(x for x in elements if x)
 
-    def visit_Attribute(self, node: ast.Attribute) -> str:
-        """Visit an Attribute node."""
-        vstr = self.visit(node.value)
-        astr = self.visit(node.attr)
-        return vstr + "." + astr
-
-    def visit_Name(self, node: ast.Name) -> str:
-        """Visit a Name node."""
-        return self.visit(node.id)
-
     # From Python 3.8
     def visit_Constant(self, node: ast.Constant) -> str:
         """Visit a Constant node."""

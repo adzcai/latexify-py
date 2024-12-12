@@ -62,7 +62,7 @@ def get_latex(
     to_file: str | None = None,
     # transformers arguments
     prefixes: set[str] | None = None,
-    identifiers: dict[str, str] | None = None,
+    replace_identifiers: dict[str, str] | None = None,
     reduce_assignments: bool = False,
     expand_functions: set[str] | None = None,
     pre_transformers: Iterable[ast.NodeTransformer] | None = None,
@@ -71,6 +71,7 @@ def get_latex(
     use_set_symbols: bool | None = None,
     use_math_symbols: bool | None = None,
     use_mathrm: bool | None = None,
+    custom_identifiers: dict[str, str] | None = None,
     # custom plugins
     plugins: Iterable[Plugin] | None = None,
     **kwargs: Any,
@@ -86,6 +87,7 @@ def get_latex(
         expand_functions (set[str] | None, optional): _description_. Defaults to None.
         pre_transformers (Iterable[ast.NodeTransformer] | None, optional): _description_. Defaults to None.
         post_transformers (Iterable[ast.NodeTransformer] | None, optional): _description_. Defaults to None.
+        plugins (Iterable[Plugin] | None, optional): _description_. Defaults to None.
 
     Returns:
         str: The LaTeX code.
@@ -95,7 +97,7 @@ def get_latex(
         (pre_transformers or [])
         + default_transformers(
             prefixes=prefixes,
-            identifiers=identifiers,
+            identifiers=replace_identifiers,
             reduce_assignments=reduce_assignments,
             expand_functions=expand_functions,
         )
@@ -109,6 +111,7 @@ def get_latex(
         use_set_symbols=use_set_symbols,
         use_math_symbols=use_math_symbols,
         use_mathrm=use_mathrm,
+        custom_identifiers=custom_identifiers,
     )
     latex = stack.visit(tree)
 

@@ -22,7 +22,7 @@ class SumProdPlugin(Plugin):
         """
         name = extract_function_name_or_none(node)
         if name not in ("fsum", "sum", "prod") or not node.args or not isinstance(node.args[0], ast.GeneratorExp):
-            return self.generic_visit(node)
+            raise NotImplementedError
 
         command = {
             "fsum": r"\sum",

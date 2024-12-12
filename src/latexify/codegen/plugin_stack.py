@@ -1,14 +1,11 @@
 from __future__ import annotations
 
 import ast
-from typing import TYPE_CHECKING
 
 from latexify.codegen.expression_codegen import ExpressionVisitor
 from latexify.codegen.identifier_converter import IdentifierConverter
+from latexify.codegen.plugin import Plugin
 from latexify.exceptions import LatexifyNotSupportedError
-
-if TYPE_CHECKING:
-    from latexify.codegen.plugin import Plugin
 
 
 class Stack(ast.NodeVisitor):
@@ -17,6 +14,8 @@ class Stack(ast.NodeVisitor):
     def __init__(self, *plugins: Plugin):
         self._plugins = plugins
         for plugin in plugins:
+            if not isinstance(plugin, Plugin):
+                raise TypeError(f"Expected Plugin, got {type(plugin)}")
             plugin._setup(self)  # noqa: SLF001
 
     def visit(self, node: ast.AST) -> str:
@@ -45,8 +44,17 @@ def default_stack(
     use_set_symbols: bool | None = None,
     use_math_symbols: bool | None = None,
     use_mathrm: bool | None = None,
+    custom_identifiers: dict[str, str] | None = None,
 ) -> Stack:
-    """Construct the default stack of plugins."""
+    """Append the default core plugins to the given plugins.
+    
+    Args:
+        *plugins (Plugin): The plugins to append.
+        use_set_symbols (bool | None, optional): Whether to use set symbols. Defaults to None.
+        use_math_symbols (bool | None, optional): Whether to use math symbols. Defaults to None.
+        use_mathrm (bool | None, optional): Whether to use mathrm. Defaults to None.
+        custom_identifiers (dict[str, str] | None, optional): Custom identifiers. Defaults to None.
+    """
     return Stack(
         *plugins,
         ExpressionVisitor(
@@ -55,5 +63,6 @@ def default_stack(
         IdentifierConverter(
             use_math_symbols=use_math_symbols,
             use_mathrm=use_mathrm,
+            custom=custom_identifiers,
         ),
     )
