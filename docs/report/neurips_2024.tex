@@ -34,7 +34,7 @@
 \usepackage{xcolor}         % colors
 \usepackage{listings}       % code listings
 
-\newcommand{\ourpkg}{\texttt{latexify-py}}
+\newcommand{\ourpkg}{\texttt{adzcai/latexify-py}}
 \newcommand{\theirpkg}{\texttt{google/latexify\_py}}
 \newcommand{\vocab}[1]{\textbf{#1}}
 
@@ -90,7 +90,7 @@ Another opposing paradigm is the \vocab{literate programming} paradigm,
 as represented by the use of Jupyter notebooks or R Markdown files,
 in which the algorithms are implemented using a specific programming language.
 These have the benefit of being \emph{executable},
-but force the author to choose language-specific or, often, framework-specific implementation details which may be irrelevant to the algorithm's functionality.
+but force the author to choose language-specific or, often, framework-specific implementation details.
 \ourpkg{} supports translation from a low-level Python implementation of an algorithm to a high-level pseudocode description of that algorithm.
 (Note that this has the opposite direction as most compilers, which take in high-level code and compile it down to low-level machine instructions.)
 While Python, as a high-level programming language,
@@ -103,8 +103,14 @@ This project builds on top of \theirpkg{} with a focus on extensibility and user
 Our main contributions are as follows:
 
 \begin{enumerate}
-    \item \vocab{Plugin system} \ref{sec:plugins}. We rewrite 
+    \item \vocab{Plugin system} \ref{sec:plugins}. We rewrite \theirpkg{} in terms of a plugin system
+        that allows users to extend the package by implementing their own translation rules using the Python \verb|ast| package.
+    \item \vocab{Identifiers} \ref{sec:identifiers}.
+        We enable users to replace Python identifiers with arbitrary \LaTeX{} strings and generalize replacement rules.
 \end{enumerate}
+
+We also implement various minor improvements and bugfixes to \theirpkg{}.
+All of our contributions come with unit tests implemented with \verb|pytest|.
 
 
 \section{Methods}
@@ -150,6 +156,7 @@ with the corresponding Greek letter:
 \begin{lstlisting}[language=Python]
 def greek_demo(alpha, beta, Omega):
     return alpha * beta + Omega
+
 with_symbols = latexify.function(greek_demo, use_math_symbols=True)
 without_symbols = latexify.function(greek_demo, use_math_symbols=True)
 \end{lstlisting}
@@ -185,30 +192,138 @@ In particular, the \verb|ExpressionCodegen| class of \theirpkg{} had grown to in
 which seemed odd to include in the base package since these depended on \verb|numpy| while the actual expressions would not.
 As a result, \theirpkg{} would convert expressions such as \verb|np.linalg.inv(np.array([[1, 1], [-1, 1]]))| purely based on the identifier names,
 even if \verb|numpy| was not installed in the environment.
+\ourpkg{} implements this functionality in a separate \verb|NumpyPlugin| that can be optionally included.
+We provide a \verb|default_stack| function that takes in a list of plugins and appends our \verb|ExpressionCodegen| and \verb|IdentifierConverter| core plugins,
+which provide the core translation functionality.
 
+We have already found this plugin system to be highly effective in allowing users to customize code transformation
+with only basic knowledge of how the Python AST works.
+For example, \verb|jaxtyping| (\url{https://docs.kidger.site/jaxtyping/}) is a Python package that supports type annotations of shapes of tensors (e.g. vectors and matrices).
+An \( M \times N \) matrix \(A\) could be annotated as \verb|A: Float[Array, "M N"]|.
+It would be impossible for the user to implement this behavior using \theirpkg{}.
+Using \ourpkg{}, however, the user can write a simple rule-based \verb|Plugin|:
 
+\begin{lstlisting}[language=Python]
+class JaxTypingPlugin(Plugin):
+    def visit_Subscript(self, node: ast.Subscript):
+        if (
+            isinstance(node.value, ast.Name)
+            and node.value.id in ("Float", "Int")
+            and isinstance(node.slice, ast.Tuple)
+            and len(elts := node.slice.elts) == 2
+            and isinstance(elts[0], ast.Name)
+            and elts[0].id == "Array"
+            and isinstance(elts[1], ast.Constant)
+            and isinstance(dim := elts[1].value, str)
+        ):
+            dim = r" \times ".join(dim.strip().split())
+            return r"\mathbb{R}^{" + dim + r"}"
+        raise NotImplementedError
 
+def f(A: Float[Array, "M N"]):
+    return A
+\end{lstlisting}
 
+Then running \verb|latexify.algorithmic(f, plugins=[JaxTypingPlugin()])| returns the reasonable result
+\[
+\begin{array}{l} \mathbf{function} \ f(A: \mathbb{R}^{M \times N}) \\ \hspace{1em} \mathbf{return} \ A \\ \mathbf{end \ function} \end{array}.
+\]
+We see that our plugin system gives users the ability to easily customize the package's behavior.
 
 \subsection{Identifiers}
+\label{sec:identifiers}
 
-The original package only allowed for replacing identifiers with other valid Python identifiers (see \verb|transformers.identifier_replacer.py|).
-That is,
-it was impossible to associate a given Python identifier with an arbitrary \LaTeX{} expression.
+\theirpkg{} only allowed replacing identifiers (e.g. variable names, argument names)
+with other valid Python identifiers (see \verb|transformers.identifier_replacer.py|).
+That is, it was impossible to associate a given Python identifier with an arbitrary \LaTeX{} expression.
 This was because the \verb|IdentifierReplacer| class was implemented as a subclass of \verb|ast.NodeTransformer|,
 which only supports replacing an AST node with another valid AST node.
 It also did not support replacement of nested identifiers such as \verb|np.linalg.eigvals| with a single LaTeX expression.
 Doing so in the original implementation would require adding \verb|np.linalg| to a list of prefixes that would be entirely removed in the transformation process.
-In our implementation,
 
+In \ourpkg{}, we add a \verb|IdentifierConverter| class that allows converting a Python identifier to an arbitrary \LaTeX{} string.
+We keep the original \verb|IdentifierReplacer|, though, since this can still be used to alias one identifier to another
+without having to re-implement the functionality.
+For example, if a user wanted to replace \verb|my_matrix_inverse(A)| with \(A^{-1}\),
+doing so would be challenging using the IdentifierReplacer,
+since the resulting text (the \(-1\) superscript) does not remain in the same place.
+Rather, the user could replace \verb|my_matrix_inverse| with \verb|np.linalg.inv| to achieve this functionality.
 
-\appendix
+We acknowledge, however, that exposing both the \verb|IdentifierConverter| and \verb|IdentifierReplacer| classes
+is potentially confusing,
+and are curious about other possible solutions to this design issue.
 
-\section{Appendix / supplemental material}
+\subsection{Miscellaneous improvements}
 
+We also implement numerous minor improvements, including:
 
-Optionally include supplemental material (complete proofs, additional experiments and plots) in appendix.
-All such materials \textbf{SHOULD be included in the main submission.}
+\begin{itemize}
+    \item \verb|elif| \vocab{statements}. These are not explicitly represented in the Python AST and must be inferred from the code structure.
+        Specifically, if the body of an \verb|else| branch contains just a single \verb|if| statement,
+        these are merged into an \verb|elif| statement in the outputted \LaTeX{}.
+    \item \vocab{Nested functions}. This is useful for defining sub-procedures within an algorithm.
+    \item \vocab{File saving}. We add a \verb|to_file| keyword argument that enables saving the resulting \LaTeX{} code
+        to a \verb|.tex| file.
+        This allows \LaTeX{} code to be generated from a Python script or Jupyter notebook and automatically included into the source code of a \LaTeX{} project.
+    \item \vocab{Tests}. We implement tests using \verb|pytest| for all of our contributions.
+        We use the existing test suite to verify that our modifications are backwards-compatible with \theirpkg{}.
+\end{itemize}
+
+This library is currently used extensively in another project by the author,
+a textbook for reinforcement learning (\url{https://rlbook.adzc.ai/}).
+Reinforcement learning algorithms can be quite complicated to describe and implement,
+and thus provides an excellent test bed for exploring limitations of \ourpkg{}.
+Below, we include an example algorithm including a nested function,
+plugin usage,
+vector shape annotations,
+and custom identifier replacements.
+
+\begin{lstlisting}[language=Python]
+def reinforce_estimator(
+    env: gym.Env, pi, theta: Float[Array, " D"]
+):
+    tau = sample_trajectory(env, pi(theta))
+    nabla_hat = jnp.zeros_like(theta)
+    total_reward = sum(r for _s, _a, r in tau)
+    for s, a, r in tau:
+        def policy_log_likelihood(theta: Float[Array, " D"]) -> float:
+            return log(pi(theta)(s, a))
+        nabla_hat += jax.grad(policy_log_likelihood)(theta) * total_reward
+    return nabla_hat
+
+result = latexify.algorithmic(
+    reinforce_estimator,
+    use_math_symbols=True,
+    plugins=[
+        SumProdPlugin(),
+        JaxTypingPlugin(),
+    ],
+    custom_identifiers={"jax.grad": r"\nabla"},
+)
+\end{lstlisting}
+
+Then \verb|result| gives the following \LaTeX{} code:
+
+\[ \begin{array}{l} \mathbf{function} \ \mathrm{reinforce\_estimator}(\mathrm{env}: \mathrm{gym}.\mathrm{Env}, \pi, \theta: \mathbb{R}^{D}) \\ \hspace{1em} \textrm{"Estimate the policy gradient using REINFORCE."} \\ \hspace{1em} \tau \gets \mathrm{sample\_trajectory} \mathopen{}\left( \mathrm{env}, \pi \mathopen{}\left( \theta \mathclose{}\right) \mathclose{}\right) \\ \hspace{1em} \widehat{\nabla} \gets \mathrm{jnp}.\mathrm{zeros\_like} \mathopen{}\left( \theta \mathclose{}\right) \\ \hspace{1em} \mathrm{total\_reward} \gets \sum_{\mathopen{}\left( \mathrm{\_s}, \mathrm{\_a}, r \mathclose{}\right) \in \tau}^{} \mathopen{}\left({r}\mathclose{}\right) \\ \hspace{1em} \mathbf{for} \ \mathopen{}\left( s, a, r \mathclose{}\right) \in \tau \ \mathbf{do} \\ \hspace{2em} \mathbf{function} \ \mathrm{policy\_log\_likelihood}(\theta: \mathbb{R}^{D}) \\ \hspace{3em} \mathbf{return} \ \log \pi \mathopen{}\left( \theta \mathclose{}\right) \mathopen{}\left( s, a \mathclose{}\right) \\ \hspace{2em} \mathbf{end \ function} \\ \hspace{2em} \widehat{\nabla} \gets \widehat{\nabla} + \nabla \mathopen{}\left( \mathrm{policy\_log\_likelihood} \mathclose{}\right) \mathopen{}\left( \theta \mathclose{}\right) \cdot \mathrm{total\_reward} \\ \hspace{1em} \mathbf{end \ for} \\ \hspace{1em} \mathbf{return} \ \widehat{\nabla} \\ \mathbf{end \ function} \end{array} \]
+
+\section{Conclusion}
+
+We implement a Python package, \ourpkg{}, that is able to convert Python source code into \LaTeX{} pseudocode.
+This enables authors of pedagogical programming texts to simultaneously provide a relatively lower-level Python implementation
+as well as a higher-level pseudocode description that is able to use mathematical notation.
+Our main contribution is to rewrite an existing library, \theirpkg{},
+in terms of a plugin system that enables users to easily express their own conversions using the Python \verb|ast| package.
+
+There are many future directions yet to be implemented.
+One would be to make use of the \verb|algpseudocode| \LaTeX{} package's \verb|\Require| and \verb|\Ensure| functions
+to include documentation about the function arguments and return value.
+This would require parsing docstrings of various formats.
+Another step would be to implement a \vocab{probability} plugin
+that intelligently understands taking the expectation of a function over some distribution,
+sampling various random variables, etc.
+The plugin system greatly improves the process of implementing and testing extensions to the translation functionality.
+We hope that \ourpkg{} will enable authors to provide readable pseudocode descriptions of their Python algorithms.
+
 
 
 

@@ -32,7 +32,7 @@ class IdentifierConverter(Plugin):
 
     def visit_str(self, name: str) -> str:
         """Treat raw strings passed to `visit` as identifiers.
-        
+
         This enables customization of identifier conversion.
         """
         return self.convert_identifier(name)[0]
@@ -49,7 +49,7 @@ class IdentifierConverter(Plugin):
         return self.visit_and_join(parts, ".")
 
     def convert_identifier(self, name: str) -> str:
-        r"""Converts Python identifiers (e.g. variable names) to appropriate LaTeX expression."""
+        """Converts Python identifiers (e.g. variable names) to appropriate LaTeX expression."""
         if name in self._custom:
             return self._custom[name], False
 

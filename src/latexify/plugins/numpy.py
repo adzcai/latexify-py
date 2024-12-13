@@ -14,7 +14,7 @@ class NumpyPlugin(Plugin):
     """Converts numpy linear algebra expressions to LaTeX.
 
     Args:
-        pinv_symbol (str, optional): The symbol to use for matrix pseudoinverses. Defaults to r"\dagger".
+        pinv_symbol (str, optional): The symbol to use for matrix pseudoinverses. Defaults to `\\dagger`.
     """
 
     def __init__(
