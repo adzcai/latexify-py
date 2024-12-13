@@ -306,6 +306,9 @@ Then \verb|result| gives the following \LaTeX{} code:
 
 \[ \begin{array}{l} \mathbf{function} \ \mathrm{reinforce\_estimator}(\mathrm{env}: \mathrm{gym}.\mathrm{Env}, \pi, \theta: \mathbb{R}^{D}) \\ \hspace{1em} \textrm{"Estimate the policy gradient using REINFORCE."} \\ \hspace{1em} \tau \gets \mathrm{sample\_trajectory} \mathopen{}\left( \mathrm{env}, \pi \mathopen{}\left( \theta \mathclose{}\right) \mathclose{}\right) \\ \hspace{1em} \widehat{\nabla} \gets \mathrm{jnp}.\mathrm{zeros\_like} \mathopen{}\left( \theta \mathclose{}\right) \\ \hspace{1em} \mathrm{total\_reward} \gets \sum_{\mathopen{}\left( \mathrm{\_s}, \mathrm{\_a}, r \mathclose{}\right) \in \tau}^{} \mathopen{}\left({r}\mathclose{}\right) \\ \hspace{1em} \mathbf{for} \ \mathopen{}\left( s, a, r \mathclose{}\right) \in \tau \ \mathbf{do} \\ \hspace{2em} \mathbf{function} \ \mathrm{policy\_log\_likelihood}(\theta: \mathbb{R}^{D}) \\ \hspace{3em} \mathbf{return} \ \log \pi \mathopen{}\left( \theta \mathclose{}\right) \mathopen{}\left( s, a \mathclose{}\right) \\ \hspace{2em} \mathbf{end \ function} \\ \hspace{2em} \widehat{\nabla} \gets \widehat{\nabla} + \nabla \mathopen{}\left( \mathrm{policy\_log\_likelihood} \mathclose{}\right) \mathopen{}\left( \theta \mathclose{}\right) \cdot \mathrm{total\_reward} \\ \hspace{1em} \mathbf{end \ for} \\ \hspace{1em} \mathbf{return} \ \widehat{\nabla} \\ \mathbf{end \ function} \end{array} \]
 
+Note that the set of keyword arguments to \verb|latexify.algorithmic| could be provided inside a helper function
+or \verb|functools.partial| to apply the same set of plugins and arguments to multiple functions in the source code.
+
 \section{Conclusion}
 
 We implement a Python package, \ourpkg{}, that is able to convert Python source code into \LaTeX{} pseudocode.
