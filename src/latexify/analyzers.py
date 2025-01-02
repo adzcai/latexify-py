@@ -6,7 +6,7 @@ import ast
 import dataclasses
 import sys
 
-from latexify import ast_utils
+from latexify.ast_utils import make_constant
 from latexify.exceptions import LatexifySyntaxError
 
 
@@ -24,6 +24,24 @@ class RangeInfo:
     start_int: int | None
     stop_int: int | None
     step_int: int | None
+
+
+def extract_int_or_none(node: ast.expr) -> int | None:
+    """Extracts int constant from the given Constant node.
+
+    Args:
+        node: ast.Constant or its equivalent representing an int value.
+
+    Returns:
+        Extracted int value, or None if extraction failed.
+    """
+    if sys.version_info < (3, 8):
+        if isinstance(node, ast.Num) and isinstance(node.n, int) and not isinstance(node.n, bool):
+            return node.n
+    elif isinstance(node, ast.Constant) and isinstance(node.value, int) and not isinstance(node.n, bool):
+        return node.value
+
+    return None
 
 
 def analyze_range(node: ast.Call) -> RangeInfo:
@@ -44,21 +62,21 @@ def analyze_range(node: ast.Call) -> RangeInfo:
     num_args = len(node.args)
 
     if num_args == 1:
-        start = ast_utils.make_constant(0)
+        start = make_constant(0)
         stop = node.args[0]
-        step = ast_utils.make_constant(1)
+        step = make_constant(1)
     else:
         start = node.args[0]
         stop = node.args[1]
-        step = node.args[2] if num_args == 3 else ast_utils.make_constant(1)
+        step = node.args[2] if num_args == 3 else make_constant(1)
 
     return RangeInfo(
         start=start,
         stop=stop,
         step=step,
-        start_int=ast_utils.extract_int_or_none(start),
-        stop_int=ast_utils.extract_int_or_none(stop),
-        step_int=ast_utils.extract_int_or_none(step),
+        start_int=extract_int_or_none(start),
+        stop_int=extract_int_or_none(stop),
+        step_int=extract_int_or_none(step),
     )
 
 
@@ -77,7 +95,7 @@ def reduce_stop_parameter(node: ast.expr) -> ast.expr:
         Converted expression.
     """
     if not (isinstance(node, ast.BinOp) and isinstance(node.op, (ast.Add, ast.Sub))):
-        return ast.BinOp(left=node, op=ast.Sub(), right=ast_utils.make_constant(1))
+        return ast.BinOp(left=node, op=ast.Sub(), right=make_constant(1))
 
     # Treatment for Python 3.7.
     rhs = (
@@ -87,7 +105,7 @@ def reduce_stop_parameter(node: ast.expr) -> ast.expr:
     )
 
     if not isinstance(rhs, ast.Constant):
-        return ast.BinOp(left=node, op=ast.Sub(), right=ast_utils.make_constant(1))
+        return ast.BinOp(left=node, op=ast.Sub(), right=make_constant(1))
 
     shift = 1 if isinstance(node.op, ast.Add) else -1
 
@@ -97,7 +115,7 @@ def reduce_stop_parameter(node: ast.expr) -> ast.expr:
         else ast.BinOp(
             left=node.left,
             op=node.op,
-            right=ast_utils.make_constant(value=rhs.value - shift),
+            right=make_constant(value=rhs.value - shift),
         )
     )
 
@@ -118,3 +136,39 @@ def analyze_attribute(node: ast.Attribute | ast.Name) -> tuple[str, ...]:
         return (*analyze_attribute(node.value), node.attr)
 
     raise LatexifySyntaxError("Unsupported AST for analyze_attribute.")
+
+
+def extract_int(node: ast.expr) -> int:
+    """Extracts int constant from the given Constant node.
+
+    Args:
+        node: ast.Constant or its equivalent representing an int value.
+
+    Returns:
+        Extracted int value.
+
+    Raises:
+        ValueError: Not a subtree containing an int value.
+    """
+    value = extract_int_or_none(node)
+
+    if value is None:
+        raise ValueError(f"Unsupported node to extract int: {type(node).__name__}")
+
+    return value
+
+
+def extract_function_name_or_none(node: ast.Call) -> str | None:
+    """Extracts function name from the given Call node.
+
+    Args:
+        node (ast.Call): The function call to examine.
+
+    Returns:
+        str | None: The function name if it can be extracted, None otherwise.
+    """
+    if isinstance(node.func, ast.Name):
+        return node.func.id
+    if isinstance(node.func, ast.Attribute):
+        return node.func.attr
+    return None

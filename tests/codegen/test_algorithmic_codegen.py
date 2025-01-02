@@ -9,17 +9,17 @@ from functools import partial
 import pytest
 from latexify import exceptions
 from latexify.codegen.algorithmic_codegen import AlgorithmicCodegen, IPythonLatexifier
-from latexify.codegen.plugin_stack import default_stack
+from latexify.codegen.plugin_stack import _default_stack
 
 from tests.utils import assert_latex_equal as assert_latex_equal_
 
-visitor = default_stack(AlgorithmicCodegen())
+visitor = _default_stack(AlgorithmicCodegen())
 assert_latex_equal = partial(
     assert_latex_equal_,
     visitor,
 )
 
-ipython_visitor = default_stack(IPythonLatexifier())
+ipython_visitor = _default_stack(IPythonLatexifier())
 assert_latex_equal_ipython = partial(assert_latex_equal_, ipython_visitor)
 
 

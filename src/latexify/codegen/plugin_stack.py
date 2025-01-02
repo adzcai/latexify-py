@@ -39,30 +39,21 @@ class Stack(ast.NodeVisitor):
         raise LatexifyNotSupportedError(f"Unsupported AST: {node.__class__.__name__}")
 
 
-def default_stack(
+def _default_stack(
     *plugins: Plugin,
-    use_set_symbols: bool | None = None,
-    use_math_symbols: bool | None = None,
-    use_mathrm: bool | None = None,
-    custom_identifiers: dict[str, str] | None = None,
+    use_set_symbols: bool = False,
+    use_math_symbols: bool = False,
+    use_mathrm: bool = True,
+    id_to_latex: dict[str, str] | None = None,
 ) -> Stack:
-    """Append the default core plugins to the given plugins.
-    
-    Args:
-        *plugins (Plugin): The plugins to append.
-        use_set_symbols (bool | None, optional): Whether to use set symbols. Defaults to None.
-        use_math_symbols (bool | None, optional): Whether to use math symbols. Defaults to None.
-        use_mathrm (bool | None, optional): Whether to use mathrm. Defaults to None.
-        custom_identifiers (dict[str, str] | None, optional): Custom identifiers. Defaults to None.
-    """
+    """Append the default core plugins to the given plugins."""
+
     return Stack(
         *plugins,
-        ExpressionVisitor(
-            use_set_symbols=use_set_symbols,
-        ),
+        ExpressionVisitor(use_set_symbols=use_set_symbols),
         IdentifierConverter(
             use_math_symbols=use_math_symbols,
             use_mathrm=use_mathrm,
-            custom=custom_identifiers,
+            id_to_latex=id_to_latex,
         ),
     )

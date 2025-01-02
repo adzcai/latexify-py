@@ -2,8 +2,7 @@ from __future__ import annotations
 
 import ast
 
-from latexify.analyzers import analyze_range, reduce_stop_parameter
-from latexify.ast_utils import extract_function_name_or_none
+from latexify.analyzers import analyze_range, extract_function_name_or_none, reduce_stop_parameter
 from latexify.codegen.plugin import Plugin
 from latexify.exceptions import LatexifyError
 
@@ -11,14 +10,17 @@ from latexify.exceptions import LatexifyError
 class SumProdPlugin(Plugin):
     """Converts sum and prod functions to LaTeX."""
 
-    def visit_Call(self, node):
+    def visit_Call(self, node: ast.Call) -> str:
         """Generates sum/prod expression.
 
         Args:
-            node: ast.Call node containing the sum/prod invocation.
+            node (ast.Call): The AST node containing the sum/prod invocation.
+
+        Raises:
+            NotImplementedError: If the node is not a sum/prod function.
 
         Returns:
-            Generated LaTeX, or None if the node has unsupported syntax.
+            str: LaTeX representation of the sum/prod expression.
         """
         name = extract_function_name_or_none(node)
         if name not in ("fsum", "sum", "prod") or not node.args or not isinstance(node.args[0], ast.GeneratorExp):

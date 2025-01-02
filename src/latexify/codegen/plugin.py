@@ -44,4 +44,5 @@ class _ArgumentsPlugin(Plugin):
             return name
 
     def visit_arguments(self, node: ast.arguments) -> str:
+        """Translate a list of arguments."""
         return self.visit_and_join(node.args)

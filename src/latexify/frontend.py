@@ -6,23 +6,50 @@ from functools import partial
 from typing import TYPE_CHECKING, Any, overload
 
 from latexify.codegen.algorithmic_codegen import AlgorithmicCodegen, IPythonLatexifier
-from latexify.codegen.function_codegen import FunctionCodegen
+from latexify.codegen.plugin import Plugin
 from latexify.exceptions import LatexifyError
 from latexify.generate_latex import get_latex
 from latexify.ipython_wrappers import LatexifyWrapper
 
 if TYPE_CHECKING:
-    import ast
-    from collections.abc import Callable, Iterable
-
-
-@overload
-def algorithmic(fn: Callable[..., Any], to_file: str | None = None, **kwargs: Any) -> LatexifyWrapper: ...
+    from collections.abc import Callable, Sequence
 
 
 @overload
 def algorithmic(
-    **kwargs: Any,
+    fn: Callable[..., Any],
+    /,
+    to_file: str | None = None,
+    plugins: Sequence[Plugin] | None = None,
+    # transformers arguments
+    trim_prefixes: set[str] | None = None,
+    replace_identifiers: dict[str, str] | None = None,
+    reduce_assignments: bool = False,
+    expand_functions: set[str] | None = None,
+    # builtin plugin arguments
+    use_set_symbols: bool = False,
+    use_math_symbols: bool = False,
+    use_mathrm: bool = True,
+    id_to_latex: dict[str, str] | None = None,
+    use_signature: bool = True,
+) -> LatexifyWrapper: ...
+
+
+@overload
+def algorithmic(
+    to_file: str | None = None,
+    plugins: Sequence[Plugin] | None = None,
+    # transformers arguments
+    trim_prefixes: set[str] | None = None,
+    replace_identifiers: dict[str, str] | None = None,
+    reduce_assignments: bool = False,
+    expand_functions: set[str] | None = None,
+    # builtin plugin arguments
+    use_set_symbols: bool = False,
+    use_math_symbols: bool = False,
+    use_mathrm: bool = True,
+    id_to_latex: dict[str, str] | None = None,
+    use_signature: bool = True,
 ) -> Callable[[Callable[..., Any]], LatexifyWrapper]: ...
 
 
@@ -46,12 +73,12 @@ def algorithmic(
     """
     if fn is not None:
         try:
-            algpseudocode = get_latex(fn, LatexifierClass=AlgorithmicCodegen, **kwargs)
+            algpseudocode = get_latex(fn, AlgorithmicCodegen(), **kwargs)
         except LatexifyError as e:
             algpseudocode = _describe_error(e)
 
         try:
-            latex = get_latex(fn, LatexifierClass=IPythonLatexifier, **kwargs)
+            latex = get_latex(fn, IPythonLatexifier(), **kwargs)
         except LatexifyError as e:
             latex = _describe_error(e)
         else:
@@ -63,17 +90,46 @@ def algorithmic(
 
 
 @overload
-def function(fn: Callable[..., Any], **kwargs: Any) -> LatexifyWrapper: ...
+def function(
+    fn: Callable[..., Any],
+    /,
+    to_file: str | None = None,
+    plugins: Sequence[Plugin] | None = None,
+    # transformers arguments
+    trim_prefixes: set[str] | None = None,
+    replace_identifiers: dict[str, str] | None = None,
+    reduce_assignments: bool = False,
+    expand_functions: set[str] | None = None,
+    # builtin plugin arguments
+    use_set_symbols: bool = False,
+    use_math_symbols: bool = False,
+    use_mathrm: bool = True,
+    id_to_latex: dict[str, str] | None = None,
+    use_signature: bool = True,
+) -> LatexifyWrapper: ...
 
 
 @overload
 def function(
-    **kwargs: Any,
+    to_file: str | None = None,
+    plugins: Sequence[Plugin] | None = None,
+    # transformers arguments
+    trim_prefixes: set[str] | None = None,
+    replace_identifiers: dict[str, str] | None = None,
+    reduce_assignments: bool = False,
+    expand_functions: set[str] | None = None,
+    # builtin plugin arguments
+    use_set_symbols: bool = False,
+    use_math_symbols: bool = False,
+    use_mathrm: bool = True,
+    id_to_latex: dict[str, str] | None = None,
+    use_signature: bool = True,
 ) -> Callable[[Callable[..., Any]], LatexifyWrapper]: ...
 
 
 def function(
-    fn: Callable[..., Any] | None = None, **kwargs: Any
+    fn: Callable[..., Any] | None = None,
+    **kwargs: Any,
 ) -> LatexifyWrapper | Callable[[Callable[..., Any]], LatexifyWrapper]:
     """Attach LaTeX pretty-printing to the given function.
 
@@ -92,7 +148,7 @@ def function(
     """
     if fn is not None:
         try:
-            latex = get_latex(fn, LatexifierClass=FunctionCodegen, **kwargs)
+            latex = get_latex(fn, **kwargs)
         except LatexifyError as e:
             s = latex = _describe_error(e)
         else:
@@ -103,20 +159,40 @@ def function(
 
 
 @overload
-def expression(fn: Callable[..., Any], **kwargs: Any) -> LatexifyWrapper: ...
+def expression(
+    fn: Callable[..., Any],
+    /,
+    to_file: str | None = None,
+    plugins: Sequence[Plugin] | None = None,
+    # transformers arguments
+    trim_prefixes: set[str] | None = None,
+    replace_identifiers: dict[str, str] | None = None,
+    reduce_assignments: bool = False,
+    expand_functions: set[str] | None = None,
+    # builtin plugin arguments
+    use_set_symbols: bool = False,
+    use_math_symbols: bool = False,
+    use_mathrm: bool = True,
+    id_to_latex: dict[str, str] | None = None,
+    use_signature: bool = False,
+) -> LatexifyWrapper: ...
 
 
 @overload
 def expression(
-    prefixes: set[str] | None = None,
-    identifiers: dict[str, str] | None = None,
+    to_file: str | None = None,
+    plugins: Sequence[Plugin] | None = None,
+    # transformers arguments
+    trim_prefixes: set[str] | None = None,
+    replace_identifiers: dict[str, str] | None = None,
     reduce_assignments: bool = False,
     expand_functions: set[str] | None = None,
-    pre_transformers: Iterable[ast.NodeTransformer] | None = None,
-    post_transformers: Iterable[ast.NodeTransformer] | None = None,
-    use_math_symbols: bool = True,
+    # builtin plugin arguments
     use_set_symbols: bool = False,
-    use_signature: bool = True,
+    use_math_symbols: bool = False,
+    use_mathrm: bool = True,
+    id_to_latex: dict[str, str] | None = None,
+    use_signature: bool = False,
 ) -> Callable[[Callable[..., Any]], LatexifyWrapper]: ...
 
 

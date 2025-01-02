@@ -3,7 +3,7 @@ from __future__ import annotations
 import ast
 from typing import TYPE_CHECKING
 
-from latexify.ast_utils import extract_function_name_or_none, extract_int_or_none
+from latexify.analyzers import extract_function_name_or_none, extract_int_or_none
 from latexify.codegen.plugin import Plugin
 
 if TYPE_CHECKING:

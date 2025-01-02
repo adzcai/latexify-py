@@ -9,7 +9,7 @@ import textwrap
 from typing import TYPE_CHECKING, cast
 
 from latexify.ast_utils import parse_expr
-from latexify.codegen.plugin_stack import default_stack
+from latexify.codegen.plugin_stack import _default_stack
 from latexify.plugins.numpy import NumpyPlugin
 from latexify.plugins.sum_prod import SumProdPlugin
 
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from latexify.codegen.plugin import Plugin
 
 
-visitor = default_stack(SumProdPlugin(), NumpyPlugin())
+visitor = _default_stack(SumProdPlugin(), NumpyPlugin())
 
 
 def assert_expr_equal(src: str, tp: type[ast.AST], latex: str) -> None:

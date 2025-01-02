@@ -53,5 +53,5 @@ def test_identifier_converter(name: str, use_math_symbols: bool, use_mathrm: boo
 def test_convert_identifier_custom(code: str, custom: dict[str, str], expected: str) -> None:
     expr = parse_expr(code)
     assert isinstance(expr, (ast.Name, ast.Attribute))
-    visitor = Stack(IdentifierConverter(custom=custom))
+    visitor = Stack(IdentifierConverter(id_to_latex=custom))
     assert visitor.visit(expr) == expected

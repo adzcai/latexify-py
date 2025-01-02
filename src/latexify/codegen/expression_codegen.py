@@ -6,23 +6,17 @@ import ast
 import re
 from typing import Any
 
-from latexify.ast_utils import extract_function_name_or_none
+from latexify.analyzers import extract_function_name_or_none
 from latexify.codegen import expression_rules
 from latexify.codegen.plugin import Plugin
 from latexify.exceptions import LatexifyNotSupportedError
 
 
 class ExpressionVisitor(Plugin):
-    """Translates single expressions to LaTeX.
-
-    This converter applies following rules:
-        - `foo` --> `\\foo`, if `use_math_symbols == True` and the given identifier
-        matches a supported math symbol name.
-        - `x` --> `x`, if the given identifier is exactly 1 character (except `_`)
-        - `foo_bar` --> `\\mathrm{foo\\_bar}`, otherwise.
+    """Translates mathematical expressions to LaTeX.
 
     Args:
-        use_set_symbols: Whether to use set symbols for comparison operators.
+        use_set_symbols (bool): Whether to use set symbols for comparison operators.
     """
 
     _bin_op_rules: dict[type[ast.operator], expression_rules.BinOpRule]
@@ -30,10 +24,8 @@ class ExpressionVisitor(Plugin):
 
     def __init__(
         self,
-        *,
-        use_set_symbols: bool | None = None,
+        use_set_symbols: bool = False,
     ) -> None:
-        use_set_symbols = False if use_set_symbols is None else use_set_symbols
         self._bin_op_rules = expression_rules.SET_BIN_OP_RULES if use_set_symbols else expression_rules.BIN_OP_RULES
         self._compare_ops = expression_rules.SET_COMPARE_OPS if use_set_symbols else expression_rules.COMPARE_OPS
 

@@ -8,9 +8,9 @@ import textwrap
 import pytest
 from latexify import exceptions
 from latexify.codegen.function_codegen import FunctionCodegen
-from latexify.codegen.plugin_stack import default_stack
+from latexify.codegen.plugin_stack import _default_stack
 
-visitor = default_stack(FunctionCodegen())
+visitor = _default_stack(FunctionCodegen())
 
 
 def test_generic_visit() -> None:
@@ -38,8 +38,8 @@ def test_visit_functiondef_use_signature() -> None:
     latex_without_flag = "x"
     latex_with_flag = r"f(x) = x"
     assert visitor.visit(tree) == latex_with_flag
-    assert default_stack(FunctionCodegen(use_signature=False)).visit(tree) == latex_without_flag
-    assert default_stack(FunctionCodegen(use_signature=True)).visit(tree) == latex_with_flag
+    assert _default_stack(FunctionCodegen(use_signature=False)).visit(tree) == latex_without_flag
+    assert _default_stack(FunctionCodegen(use_signature=True)).visit(tree) == latex_with_flag
 
 
 def test_visit_functiondef_ignore_docstring() -> None:

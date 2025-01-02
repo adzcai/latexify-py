@@ -22,10 +22,7 @@ class _AlgorithmCodegenBase(_ArgumentsPlugin, metaclass=ABCMeta):
     and generate LaTeX `algpseudocode` code for the algorithm.
 
     If `ipython` is enabled,
-    doesn't use the `algorithmic` environment.
-
-    This codegen works for Module with single FunctionDef node to generate a single
-    LaTeX expression of the given algorithm.
+    doesn't use the `algorithmic` environment from the `algpseudocode` package.
     """
 
     _indent_level: int = 0

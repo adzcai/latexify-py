@@ -7,12 +7,12 @@ import ast
 import pytest
 from latexify import exceptions
 from latexify.ast_utils import parse_expr
-from latexify.codegen.plugin_stack import default_stack
+from latexify.codegen.plugin_stack import _default_stack
 from latexify.plugins.numpy import NumpyPlugin
 
 from tests.utils import assert_expr_equal, require_at_least, require_at_most
 
-visitor = default_stack(NumpyPlugin())
+visitor = _default_stack(NumpyPlugin())
 
 
 def test_generic_visit() -> None:
@@ -639,7 +639,7 @@ def test_visit_subscript(code: str, latex: str) -> None:
 def test_visit_binop_use_set_symbols(code: str, latex: str) -> None:
     tree = parse_expr(code)
     assert isinstance(tree, ast.BinOp)
-    assert default_stack(use_set_symbols=True).visit(tree) == latex
+    assert _default_stack(use_set_symbols=True).visit(tree) == latex
 
 
 @pytest.mark.parametrize(
@@ -654,7 +654,7 @@ def test_visit_binop_use_set_symbols(code: str, latex: str) -> None:
 def test_visit_compare_use_set_symbols(code: str, latex: str) -> None:
     tree = parse_expr(code)
     assert isinstance(tree, ast.Compare)
-    assert default_stack(use_set_symbols=True).visit(tree) == latex
+    assert _default_stack(use_set_symbols=True).visit(tree) == latex
 
 
 # Check list for #89.
@@ -740,4 +740,4 @@ def test_remove_multiply(left: str, right: str, latex: str) -> None:
     for op in ["*", "@"]:
         tree = parse_expr(f"{left} {op} {right}")
         assert isinstance(tree, ast.BinOp)
-        assert default_stack(use_math_symbols=True).visit(tree) == latex
+        assert _default_stack(use_math_symbols=True).visit(tree) == latex

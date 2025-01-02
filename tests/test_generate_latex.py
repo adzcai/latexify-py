@@ -44,12 +44,12 @@ def test_prefixes() -> None:
     latex_with_flag4 = r"f(x) = d + e"
 
     assert get_latex(f) == latex_without_flag
-    assert get_latex(f, prefixes=set()) == latex_without_flag
-    assert get_latex(f, prefixes={"abc"}) == latex_with_flag1
-    assert get_latex(f, prefixes={"x"}) == latex_with_flag2
-    assert get_latex(f, prefixes={"x.y"}) == latex_with_flag3
-    assert get_latex(f, prefixes={"abc", "x.y.z"}) == latex_with_flag4
-    assert get_latex(f, prefixes={"abc", "x", "x.y.z"}) == latex_with_flag4
+    assert get_latex(f, trim_prefixes=set()) == latex_without_flag
+    assert get_latex(f, trim_prefixes={"abc"}) == latex_with_flag1
+    assert get_latex(f, trim_prefixes={"x"}) == latex_with_flag2
+    assert get_latex(f, trim_prefixes={"x.y"}) == latex_with_flag3
+    assert get_latex(f, trim_prefixes={"abc", "x.y.z"}) == latex_with_flag4
+    assert get_latex(f, trim_prefixes={"abc", "x", "x.y.z"}) == latex_with_flag4
 
 
 def test_reduce_assignments() -> None:

@@ -13,8 +13,7 @@ from latexify.codegen.plugin import _ArgumentsPlugin
 class FunctionCodegen(_ArgumentsPlugin):
     """Codegen for single functions.
 
-    This codegen works for Module with single FunctionDef node to generate a single
-    LaTeX expression of the given function.
+    This codegen translates a single FunctionDef node to a corresponding LaTeX expression.
 
     Args:
         use_signature: Whether to add the function signature (e.g. `f(x) = ...`)
@@ -27,7 +26,6 @@ class FunctionCodegen(_ArgumentsPlugin):
         self,
         *,
         use_signature: bool = True,
-        **_,
     ) -> None:
         self._use_signature = use_signature
 

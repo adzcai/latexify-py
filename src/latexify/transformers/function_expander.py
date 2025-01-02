@@ -4,6 +4,7 @@ import ast
 import functools
 from typing import TYPE_CHECKING
 
+import latexify.analyzers
 from latexify import ast_utils, exceptions
 
 if TYPE_CHECKING:
@@ -31,7 +32,7 @@ class FunctionExpander(ast.NodeTransformer):
 
     def visit_Call(self, node: ast.Call) -> ast.AST:
         """Visit a Call node."""
-        func_name = ast_utils.extract_function_name_or_none(node)
+        func_name = latexify.analyzers.extract_function_name_or_none(node)
         if func_name is not None and func_name in self._functions and func_name in _FUNCTION_EXPANDERS:
             return _FUNCTION_EXPANDERS[func_name](self, node)
 
@@ -137,7 +138,7 @@ def _pow_expander(function_expander: FunctionExpander, node: ast.Call) -> ast.AS
 
 def _check_num_args(node: ast.Call, nargs: int) -> None:
     if len(node.args) != nargs:
-        fn_name = ast_utils.extract_function_name_or_none(node)
+        fn_name = latexify.analyzers.extract_function_name_or_none(node)
         raise exceptions.LatexifySyntaxError(
             f"Incorrect number of arguments for {fn_name}." f" expected: {nargs}, but got {len(node.args)}"
         )

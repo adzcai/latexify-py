@@ -9,11 +9,11 @@ import pytest
 from latexify import exceptions
 from latexify.ast_utils import parse_function
 from latexify.codegen.function_codegen import FunctionCodegen
-from latexify.codegen.plugin_stack import default_stack
+from latexify.codegen.plugin_stack import _default_stack
 
 from tests import utils
 
-visitor = default_stack(FunctionCodegen())
+visitor = _default_stack(FunctionCodegen())
 
 
 @utils.require_at_least(10)

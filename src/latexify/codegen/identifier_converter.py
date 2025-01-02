@@ -13,22 +13,22 @@ class IdentifierConverter(Plugin):
     """Converts Python identifiers to LaTeX expressions.
 
     Args:
-        use_math_symbols (bool): Whether to convert identifiers with a math symbol
-            surface (e.g., "alpha") to the LaTeX symbol (e.g., "\\alpha").
-        use_mathrm (bool): Whether to wrap identifiers in \\mathrm{}.
-        custom (dict[str, str]): A dictionary mapping Python identifiers to LaTeX
-            expressions. These custom mappings take precedence over the other options.
+        use_math_symbols (bool, optional): Whether to convert "math symbol" identifiers
+            (e.g., "alpha") to the corresponding LaTeX symbol (e.g., "\\alpha"). Defaults to False.
+        use_mathrm (bool, optional): Whether to wrap identifiers in \\mathrm{}. Defaults to True.
+        custom_identifiers (dict[str, str], optional): A dictionary mapping Python identifiers to LaTeX expressions.
+            These custom mappings take precedence over the other options. Defaults to None.
     """
 
     def __init__(
         self,
-        use_math_symbols: bool | None = None,
-        use_mathrm: bool | None = None,
-        custom: dict[str, str] | None = None,
+        use_math_symbols: bool = False,
+        use_mathrm: bool = True,
+        id_to_latex: dict[str, str] | None = None,
     ):
-        self._use_math_symbols = False if use_math_symbols is None else use_math_symbols
-        self._use_mathrm = True if use_mathrm is None else use_mathrm
-        self._custom = custom or {}
+        self._use_math_symbols = use_math_symbols
+        self._use_mathrm = use_mathrm
+        self._id_to_latex = id_to_latex or {}
 
     def visit_str(self, name: str) -> str:
         """Treat raw strings passed to `visit` as identifiers.
@@ -44,14 +44,14 @@ class IdentifierConverter(Plugin):
     def visit_Attribute(self, node: ast.Attribute):
         parts = analyze_attribute(node)
         name = ".".join(parts)
-        if name in self._custom:
-            return self._custom[name]
+        if name in self._id_to_latex:
+            return self._id_to_latex[name]
         return self.visit_and_join(parts, ".")
 
     def convert_identifier(self, name: str) -> str:
         """Converts Python identifiers (e.g. variable names) to appropriate LaTeX expression."""
-        if name in self._custom:
-            return self._custom[name], False
+        if name in self._id_to_latex:
+            return self._id_to_latex[name], False
 
         if self._use_math_symbols and name in MATH_SYMBOLS:
             return "\\" + name, True

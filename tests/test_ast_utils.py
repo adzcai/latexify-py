@@ -5,6 +5,7 @@ from __future__ import annotations
 import ast
 from typing import Any
 
+import latexify.analyzers
 import pytest
 from latexify import ast_utils
 
@@ -146,44 +147,44 @@ def test_is_str(value: ast.AST, expected: bool) -> None:
 
 
 def test_extract_int_or_none() -> None:
-    assert ast_utils.extract_int_or_none(ast_utils.make_constant(-123)) == -123
-    assert ast_utils.extract_int_or_none(ast_utils.make_constant(0)) == 0
-    assert ast_utils.extract_int_or_none(ast_utils.make_constant(123)) == 123
+    assert latexify.analyzers.extract_int_or_none(ast_utils.make_constant(-123)) == -123
+    assert latexify.analyzers.extract_int_or_none(ast_utils.make_constant(0)) == 0
+    assert latexify.analyzers.extract_int_or_none(ast_utils.make_constant(123)) == 123
 
 
 def test_extract_int_or_none_invalid() -> None:
     # Not a Constant node with int.
-    assert ast_utils.extract_int_or_none(ast_utils.make_constant(None)) is None
-    assert ast_utils.extract_int_or_none(ast_utils.make_constant(True)) is None
-    assert ast_utils.extract_int_or_none(ast_utils.make_constant(...)) is None
-    assert ast_utils.extract_int_or_none(ast_utils.make_constant(123.0)) is None
-    assert ast_utils.extract_int_or_none(ast_utils.make_constant(4 + 5j)) is None
-    assert ast_utils.extract_int_or_none(ast_utils.make_constant("123")) is None
-    assert ast_utils.extract_int_or_none(ast_utils.make_constant(b"123")) is None
+    assert latexify.analyzers.extract_int_or_none(ast_utils.make_constant(None)) is None
+    assert latexify.analyzers.extract_int_or_none(ast_utils.make_constant(True)) is None
+    assert latexify.analyzers.extract_int_or_none(ast_utils.make_constant(...)) is None
+    assert latexify.analyzers.extract_int_or_none(ast_utils.make_constant(123.0)) is None
+    assert latexify.analyzers.extract_int_or_none(ast_utils.make_constant(4 + 5j)) is None
+    assert latexify.analyzers.extract_int_or_none(ast_utils.make_constant("123")) is None
+    assert latexify.analyzers.extract_int_or_none(ast_utils.make_constant(b"123")) is None
 
 
 def test_extract_int() -> None:
-    assert ast_utils.extract_int(ast_utils.make_constant(-123)) == -123
-    assert ast_utils.extract_int(ast_utils.make_constant(0)) == 0
-    assert ast_utils.extract_int(ast_utils.make_constant(123)) == 123
+    assert latexify.analyzers.extract_int(ast_utils.make_constant(-123)) == -123
+    assert latexify.analyzers.extract_int(ast_utils.make_constant(0)) == 0
+    assert latexify.analyzers.extract_int(ast_utils.make_constant(123)) == 123
 
 
 def test_extract_int_invalid() -> None:
     # Not a Constant node with int.
     with pytest.raises(ValueError, match=r"^Unsupported node to extract int"):
-        ast_utils.extract_int(ast_utils.make_constant(None))
+        latexify.analyzers.extract_int(ast_utils.make_constant(None))
     with pytest.raises(ValueError, match=r"^Unsupported node to extract int"):
-        ast_utils.extract_int(ast_utils.make_constant(True))
+        latexify.analyzers.extract_int(ast_utils.make_constant(True))
     with pytest.raises(ValueError, match=r"^Unsupported node to extract int"):
-        ast_utils.extract_int(ast_utils.make_constant(...))
+        latexify.analyzers.extract_int(ast_utils.make_constant(...))
     with pytest.raises(ValueError, match=r"^Unsupported node to extract int"):
-        ast_utils.extract_int(ast_utils.make_constant(123.0))
+        latexify.analyzers.extract_int(ast_utils.make_constant(123.0))
     with pytest.raises(ValueError, match=r"^Unsupported node to extract int"):
-        ast_utils.extract_int(ast_utils.make_constant(4 + 5j))
+        latexify.analyzers.extract_int(ast_utils.make_constant(4 + 5j))
     with pytest.raises(ValueError, match=r"^Unsupported node to extract int"):
-        ast_utils.extract_int(ast_utils.make_constant("123"))
+        latexify.analyzers.extract_int(ast_utils.make_constant("123"))
     with pytest.raises(ValueError, match=r"^Unsupported node to extract int"):
-        ast_utils.extract_int(ast_utils.make_constant(b"123"))
+        latexify.analyzers.extract_int(ast_utils.make_constant(b"123"))
 
 
 @pytest.mark.parametrize(
@@ -217,4 +218,4 @@ def test_extract_int_invalid() -> None:
     ],
 )
 def test_extract_function_name_or_none(value: ast.Call, expected: str | None) -> None:
-    assert ast_utils.extract_function_name_or_none(value) == expected
+    assert latexify.analyzers.extract_function_name_or_none(value) == expected
